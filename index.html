@@ -54,9 +54,9 @@
   .btn:disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
 
   /* MODALS */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
   .modal-overlay.open { display:flex; }
-  .modal { background:var(--dark2); border:1px solid var(--border-bright); padding:2.5rem; width:100%; max-width:420px; margin:1rem; position:relative; max-height:90vh; overflow-y:auto; }
+  .modal { background:var(--dark2); border:1px solid var(--border-bright); padding:2.5rem; width:100%; max-width:480px; margin:1rem; position:relative; max-height:90vh; overflow-y:auto; z-index:10000; }
   .modal-title { font-family:'Cinzel',serif; font-size:1.2rem; letter-spacing:0.1em; color:var(--gold); margin-bottom:2rem; text-align:center; }
   .form-group { margin-bottom:1.25rem; }
   .form-group label { display:block; font-family:var(--mono); font-size:0.7rem; letter-spacing:0.2em; color:var(--text-dim); text-transform:uppercase; margin-bottom:0.5rem; }
@@ -844,9 +844,12 @@ function renderDashboard(){
         <div class="dashboard-role">${roleLabels[myRole.role]||myRole.role}</div>
         <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);letter-spacing:0.15em;margin-top:0.25rem">🏛 ${c.capital}</div>
       </div>
-      <div style="margin-left:auto;text-align:right">
-        <div class="big-number">${calcDominance(c,allCountries).toFixed(1)}%</div>
-        <div class="big-number-label">Global Dominance</div>
+      <div style="margin-left:auto;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:1rem">
+        <div>
+          <div class="big-number">${calcDominance(c,allCountries).toFixed(1)}%</div>
+          <div class="big-number-label">Global Dominance</div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:0.6rem;padding:0.4rem 0.8rem" onclick="confirmExitRole()">🚪 Resign Role</button>
       </div>
     </div>
     <div class="grid-4" style="margin-bottom:2rem">
@@ -899,19 +902,143 @@ function renderActions(){
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 async function triggerAction(type){
   const c=myCountry;
-  const needsTarget=['propose_alliance','sign_nap','issue_sanctions','declare_war','send_aid','spy_mission'].includes(type);
   const countryOptions=allCountries.filter(x=>x.id!==c.id).map(x=>`<option value="${x.id}">${x.flag} ${x.name}</option>`).join('');
-  const labels={propose_alliance:'Propose Alliance',sign_nap:'Non-Aggression Pact',issue_sanctions:'Issue Sanctions',declare_war:'⚠️ Declare War',send_aid:'Send Foreign Aid',invest_industry:'Invest in Industry',recruit_troops:'Recruit Troops',upgrade_airforce:'Upgrade Air Force',military_drills:'Military Drills',spy_mission:'Spy Mission',counter_intel:'Counter-Intelligence',call_election:'Call Election',propaganda:'Propaganda Campaign',adjust_tax:'Adjust Tax Rate'};
-  let extraFields='';
-  if(type==='adjust_tax') extraFields=`<div class="form-group"><label>New Tax Rate (%)</label><input type="number" id="action-tax" min="5" max="60" value="${c.tax_rate}"></div>`;
+
+  const configs = {
+    declare_war: {
+      title:'⚠️ Declare War', danger:true,
+      fields:[
+        {id:'action-target',label:'Target Nation',type:'select',options:countryOptions},
+        {id:'action-wartype',label:'War Type',type:'select',options:'<option value="full">Full Invasion</option><option value="limited">Limited Strike</option><option value="naval">Naval Blockade</option>'},
+        {id:'action-msg',label:'War Declaration Message',type:'text',placeholder:'State your justification...'},
+      ],
+      warning:'This will drastically reduce public approval and may trigger allied responses.'
+    },
+    propose_alliance: {
+      title:'🤝 Propose Alliance',
+      fields:[
+        {id:'action-target',label:'Target Nation',type:'select',options:countryOptions},
+        {id:'action-alliance-type',label:'Alliance Type',type:'select',options:'<option value="military">Full Military Alliance</option><option value="defensive">Defensive Pact Only</option><option value="economic">Economic Partnership</option>'},
+        {id:'action-msg',label:'Proposal Message',type:'text',placeholder:'Describe the terms of your proposal...'},
+      ]
+    },
+    sign_nap: {
+      title:'📜 Non-Aggression Pact',
+      fields:[
+        {id:'action-target',label:'Target Nation',type:'select',options:countryOptions},
+        {id:'action-duration',label:'Duration',type:'select',options:'<option value="30">30 Days</option><option value="60">60 Days</option><option value="999">Indefinite</option>'},
+        {id:'action-msg',label:'Diplomatic Note',type:'text',placeholder:'Optional message...'},
+      ]
+    },
+    issue_sanctions: {
+      title:'🚫 Issue Sanctions',
+      fields:[
+        {id:'action-target',label:'Target Nation',type:'select',options:countryOptions},
+        {id:'action-sanction-type',label:'Sanction Type',type:'select',options:'<option value="trade">Trade Embargo</option><option value="financial">Financial Freeze</option><option value="arms">Arms Embargo</option><option value="full">Comprehensive Sanctions</option>'},
+        {id:'action-sanction-severity',label:'Severity',type:'range',min:1,max:10,value:5,unit:'/ 10'},
+        {id:'action-msg',label:'Public Statement',type:'text',placeholder:'Justify your sanctions...'},
+      ],
+      info:'Cost: 200 Treasury. Reduces target GDP and trade balance.'
+    },
+    send_aid: {
+      title:'💸 Send Foreign Aid',
+      fields:[
+        {id:'action-target',label:'Recipient Nation',type:'select',options:countryOptions},
+        {id:'action-aid-type',label:'Aid Type',type:'select',options:'<option value="financial">Financial Aid</option><option value="military">Military Equipment</option><option value="humanitarian">Humanitarian Aid</option><option value="development">Development Funds</option>'},
+        {id:'action-aid-amount',label:`Amount (Treasury: ${c.treasury}B available)`,type:'range',min:50,max:Math.min(c.treasury,2000),value:500,unit:'B'},
+        {id:'action-msg',label:'Diplomatic Note',type:'text',placeholder:'Message to recipient...'},
+      ]
+    },
+    invest_industry: {
+      title:'🏭 Invest in Industry',
+      fields:[
+        {id:'action-invest-sector',label:'Sector',type:'select',options:'<option value="manufacturing">Manufacturing</option><option value="technology">Technology</option><option value="energy">Energy</option><option value="agriculture">Agriculture</option><option value="infrastructure">Infrastructure</option>'},
+        {id:'action-invest-amount',label:`Investment Amount (Treasury: ${c.treasury}B)`,type:'range',min:200,max:Math.min(c.treasury,5000),value:1000,unit:'B'},
+        {id:'action-msg',label:'Announcement',type:'text',placeholder:'Optional press release...'},
+      ],
+      info:'Boosts GDP based on investment size. Higher amounts yield more growth.'
+    },
+    recruit_troops: {
+      title:'🪖 Recruit Troops',
+      fields:[
+        {id:'action-troop-amount',label:`Troops to Recruit (Treasury: ${c.treasury}B)`,type:'range',min:10,max:200,value:50,unit:'k'},
+        {id:'action-troop-type',label:'Training Focus',type:'select',options:'<option value="infantry">Infantry</option><option value="armor">Armored Units</option><option value="special">Special Forces</option>'},
+      ],
+      info:'Cost: 6B per 1k troops. Higher quality training costs more.'
+    },
+    upgrade_airforce: {
+      title:'✈️ Upgrade Air Force',
+      fields:[
+        {id:'action-air-amount',label:'Aircraft to Purchase',type:'range',min:5,max:100,value:30,unit:' aircraft'},
+        {id:'action-air-type',label:'Aircraft Type',type:'select',options:'<option value="fighter">Fighter Jets</option><option value="bomber">Strategic Bombers</option><option value="drone">Drone Fleet</option><option value="transport">Transport Aircraft</option>'},
+      ],
+      info:'Cost: ~17B per aircraft. Improves air superiority and power projection.'
+    },
+    military_drills: {
+      title:'🛡️ Military Drills',
+      fields:[
+        {id:'action-drill-scale',label:'Exercise Scale',type:'select',options:'<option value="small">Small Unit Exercise (Cost: 80B)</option><option value="medium">Corps-Level Exercise (Cost: 150B)</option><option value="large">Full Military Exercise (Cost: 300B)</option>'},
+        {id:'action-drill-focus',label:'Training Focus',type:'select',options:'<option value="readiness">Combat Readiness</option><option value="morale">Troop Morale</option><option value="combined">Combined Arms</option>'},
+      ]
+    },
+    adjust_tax: {
+      title:'📊 Adjust Tax Rate',
+      fields:[
+        {id:'action-tax',label:`Tax Rate (Current: ${c.tax_rate}%)`,type:'range',min:5,max:60,value:c.tax_rate,unit:'%'},
+        {id:'action-tax-type',label:'Tax Type',type:'select',options:'<option value="income">Income Tax</option><option value="corporate">Corporate Tax</option><option value="vat">VAT / Sales Tax</option>'},
+      ],
+      info:'Higher taxes = more treasury income but lower public approval. Sweet spot is usually 20-35%.'
+    },
+    propaganda: {
+      title:'📻 Propaganda Campaign',
+      fields:[
+        {id:'action-prop-type',label:'Campaign Type',type:'select',options:'<option value="patriotic">Patriotic Appeal</option><option value="economic">Economic Success Story</option><option value="military">Military Strength</option><option value="fear">Fear of Enemies</option>'},
+        {id:'action-prop-intensity',label:'Campaign Intensity',type:'range',min:1,max:5,value:3,unit:' / 5'},
+      ],
+      info:'Boosts approval but reduces civil liberties. Overuse creates instability.'
+    },
+    call_election: {
+      title:'🗳️ Call Election',
+      fields:[
+        {id:'action-election-type',label:'Election Type',type:'select',options:'<option value="presidential">Presidential</option><option value="parliamentary">Parliamentary</option><option value="referendum">National Referendum</option>'},
+        {id:'action-msg',label:'Campaign Platform',type:'text',placeholder:'Your main policy platform...'},
+      ],
+      warning:'Reduces stability by 10. May trigger political crisis if approval is low.'
+    },
+    spy_mission: {
+      title:'🕵️ Spy Mission',
+      fields:[
+        {id:'action-target',label:'Target Nation',type:'select',options:countryOptions},
+        {id:'action-spy-type',label:'Mission Type',type:'select',options:'<option value="intel">Intelligence Gathering</option><option value="sabotage">Industrial Sabotage</option><option value="destabilize">Destabilize Government</option><option value="steal">Steal Military Secrets</option>'},
+        {id:'action-spy-risk',label:'Risk Level',type:'select',options:'<option value="low">Low Risk (200B, less effective)</option><option value="medium">Medium Risk (350B, standard)</option><option value="high">High Risk (500B, very effective)</option>'},
+      ]
+    },
+    counter_intel: {
+      title:'📡 Counter-Intelligence',
+      fields:[
+        {id:'action-ci-type',label:'Operation Type',type:'select',options:'<option value="defensive">Defensive Screening</option><option value="mole-hunt">Mole Hunt</option><option value:"double-agent">Double Agent Program</option>'},
+      ],
+      info:'Cost: 150B. Reduces effectiveness of enemy espionage against your country.'
+    },
+  };
+
+  const cfg = configs[type] || {title:type, fields:[]};
+
+  function renderField(f){
+    if(f.type==='select') return `<div class="form-group"><label>${f.label}</label><select id="${f.id}">${f.options}</select></div>`;
+    if(f.type==='text') return `<div class="form-group"><label>${f.label}</label><input type="text" id="${f.id}" placeholder="${f.placeholder||''}"></div>`;
+    if(f.type==='range') return `<div class="form-group"><label>${f.label}: <span id="${f.id}-display" style="color:var(--gold)">${f.value}${f.unit||''}</span></label><input type="range" id="${f.id}" min="${f.min}" max="${f.max}" value="${f.value}" oninput="document.getElementById('${f.id}-display').textContent=this.value+'${f.unit||''}'" style="width:100%;accent-color:var(--gold);margin-top:0.5rem"></div>`;
+    return '';
+  }
+
   document.getElementById('action-modal-content').innerHTML=`
-    <div class="modal-title">${labels[type]||type}</div>
-    ${needsTarget?`<div class="form-group"><label>Target Nation</label><select id="action-target">${countryOptions}</select></div>`:''}
-    ${extraFields}
-    <div class="form-group"><label>Message / Declaration (optional)</label><input type="text" id="action-msg" placeholder="Add a diplomatic note..."></div>
-    <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
-      <button class="btn ${type==='declare_war'?'btn-danger':'btn-success'}" style="flex:1" onclick="executeAction('${type}')">Confirm</button>
-      <button class="btn btn-ghost" onclick="closeModal('action')">Cancel</button>
+    <div class="modal-title">${cfg.title}</div>
+    ${cfg.warning?`<div style="background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.4);padding:0.75rem;margin-bottom:1.5rem;font-size:0.85rem;color:#e74c3c;line-height:1.5">⚠️ ${cfg.warning}</div>`:''}
+    ${cfg.info?`<div style="background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);padding:0.75rem;margin-bottom:1.5rem;font-size:0.85rem;color:var(--text-dim);line-height:1.5">ℹ️ ${cfg.info}</div>`:''}
+    ${cfg.fields.map(renderField).join('')}
+    <div style="display:flex;gap:0.75rem;margin-top:1rem">
+      <button class="btn ${cfg.danger?'btn-danger':'btn-success'}" style="flex:1;padding:0.9rem" onclick="executeAction('${type}')">Confirm</button>
+      <button class="btn btn-ghost" style="padding:0.9rem 1.5rem" onclick="closeModal('action')">Cancel</button>
     </div>
   `;
   openModal('action');
@@ -923,22 +1050,101 @@ async function executeAction(type){
   const c=myCountry;
   const target=allCountries.find(x=>x.id===targetId);
   let newStats={},newsHeadline='',newsCategory='general',relationUpdate=null;
+
+  const warType=document.getElementById('action-wartype')?.value||'full';
+  const aidAmount=parseInt(document.getElementById('action-aid-amount')?.value||500);
+  const aidType=document.getElementById('action-aid-type')?.value||'financial';
+  const investAmount=parseInt(document.getElementById('action-invest-amount')?.value||1000);
+  const investSector=document.getElementById('action-invest-sector')?.value||'manufacturing';
+  const troopAmount=parseInt(document.getElementById('action-troop-amount')?.value||50);
+  const airAmount=parseInt(document.getElementById('action-air-amount')?.value||30);
+  const drillScale=document.getElementById('action-drill-scale')?.value||'medium';
+  const newTax=parseInt(document.getElementById('action-tax')?.value||c.tax_rate);
+  const propIntensity=parseInt(document.getElementById('action-prop-intensity')?.value||3);
+  const sanctionSeverity=parseInt(document.getElementById('action-sanction-severity')?.value||5);
+  const spyRisk=document.getElementById('action-spy-risk')?.value||'medium';
+
   switch(type){
-    case 'declare_war': newStats={approval:Math.max(0,c.approval-15)}; newsHeadline=`${c.flag} ${c.name} has declared war on ${target?.flag} ${target?.name}!`; newsCategory='war'; relationUpdate={status:'at_war',score:-80}; break;
-    case 'propose_alliance': newsHeadline=`${c.flag} ${c.name} has proposed a military alliance with ${target?.flag} ${target?.name}.`; newsCategory='diplomacy'; relationUpdate={status:'ally',score:70}; break;
-    case 'sign_nap': newsHeadline=`${c.flag} ${c.name} and ${target?.flag} ${target?.name} have signed a Non-Aggression Pact.`; newsCategory='diplomacy'; relationUpdate={status:'pact',score:40}; break;
-    case 'issue_sanctions': newStats={treasury:Math.max(0,c.treasury-200)}; newsHeadline=`${c.flag} ${c.name} has imposed economic sanctions on ${target?.flag} ${target?.name}.`; newsCategory='economy'; relationUpdate={status:'sanctioned',score:-40}; break;
-    case 'send_aid': newStats={treasury:Math.max(0,c.treasury-500)}; newsHeadline=`${c.flag} ${c.name} has sent foreign aid to ${target?.flag} ${target?.name}.`; newsCategory='diplomacy'; relationUpdate={score:25}; break;
-    case 'invest_industry': newStats={treasury:Math.max(0,c.treasury-1000),gdp:c.gdp+150}; newsHeadline=`${c.flag} ${c.name} announces major industrial investment program.`; newsCategory='economy'; break;
-    case 'recruit_troops': newStats={treasury:Math.max(0,c.treasury-300),army:c.army+50}; newsHeadline=`${c.flag} ${c.name} expands its military with new troop recruitment.`; break;
-    case 'upgrade_airforce': newStats={treasury:Math.max(0,c.treasury-500),air_force:c.air_force+30}; newsHeadline=`${c.flag} ${c.name} upgrades its air force capabilities.`; break;
-    case 'military_drills': newStats={treasury:Math.max(0,c.treasury-150),military_readiness:Math.min(100,c.military_readiness+10),military_morale:Math.min(100,c.military_morale+8)}; newsHeadline=`${c.flag} ${c.name} conducts large-scale military exercises.`; break;
-    case 'propaganda': newStats={treasury:Math.max(0,c.treasury-400),approval:Math.min(100,c.approval+8),civil_liberties:Math.max(0,c.civil_liberties-5)}; newsHeadline=`${c.flag} ${c.name} launches state propaganda campaign.`; break;
-    case 'call_election': newStats={stability:Math.max(0,c.stability-10)}; newsHeadline=`${c.flag} ${c.name} calls for early national elections.`; break;
-    case 'adjust_tax': const newTax=parseInt(document.getElementById('action-tax')?.value||c.tax_rate); newStats={tax_rate:newTax,approval:Math.max(0,Math.min(100,c.approval-(newTax-c.tax_rate)))}; newsHeadline=`${c.flag} ${c.name} adjusts tax rate to ${newTax}%.`; newsCategory='economy'; break;
-    case 'spy_mission': newStats={treasury:Math.max(0,c.treasury-200)}; newsHeadline=`Intelligence operatives from ${c.flag} ${c.name} conduct covert operations.`; break;
-    case 'counter_intel': newStats={treasury:Math.max(0,c.treasury-150)}; newsHeadline=`${c.flag} ${c.name} strengthens counter-intelligence operations.`; break;
+    case 'declare_war':
+      newStats={approval:Math.max(0,c.approval-(warType==='full'?15:warType==='limited'?8:5))};
+      newsHeadline=`${c.flag} ${c.name} has declared ${warType==='full'?'full-scale war':warType==='limited'?'a limited military strike':'a naval blockade'} on ${target?.flag} ${target?.name}!`;
+      newsCategory='war';
+      relationUpdate={status:'at_war',score:-80};
+      break;
+    case 'propose_alliance':
+      const allianceType=document.getElementById('action-alliance-type')?.value||'military';
+      newsHeadline=`${c.flag} ${c.name} proposes a ${allianceType} alliance with ${target?.flag} ${target?.name}.`;
+      newsCategory='diplomacy';
+      relationUpdate={status:'ally',score:70};
+      break;
+    case 'sign_nap':
+      const duration=document.getElementById('action-duration')?.value||'30';
+      newsHeadline=`${c.flag} ${c.name} and ${target?.flag} ${target?.name} sign a Non-Aggression Pact${duration==='999'?' of indefinite duration':` for ${duration} days`}.`;
+      newsCategory='diplomacy';
+      relationUpdate={status:'pact',score:40};
+      break;
+    case 'issue_sanctions':
+      const sanctionType=document.getElementById('action-sanction-type')?.value||'trade';
+      newStats={treasury:Math.max(0,c.treasury-200)};
+      newsHeadline=`${c.flag} ${c.name} imposes ${sanctionType} sanctions on ${target?.flag} ${target?.name} (severity ${sanctionSeverity}/10).`;
+      newsCategory='economy';
+      relationUpdate={status:'sanctioned',score:-(20+sanctionSeverity*6)};
+      break;
+    case 'send_aid':
+      newStats={treasury:Math.max(0,c.treasury-aidAmount)};
+      newsHeadline=`${c.flag} ${c.name} sends ${aidType} aid worth ${aidAmount}B to ${target?.flag} ${target?.name}.`;
+      newsCategory='diplomacy';
+      relationUpdate={score:Math.round(aidAmount/50)};
+      break;
+    case 'invest_industry':
+      const gdpGain=Math.round(investAmount*0.15);
+      newStats={treasury:Math.max(0,c.treasury-investAmount),gdp:c.gdp+gdpGain};
+      newsHeadline=`${c.flag} ${c.name} invests ${investAmount}B in ${investSector} sector — GDP grows by ${gdpGain}B.`;
+      newsCategory='economy';
+      break;
+    case 'recruit_troops':
+      const troopCost=troopAmount*6;
+      newStats={treasury:Math.max(0,c.treasury-troopCost),army:c.army+troopAmount};
+      newsHeadline=`${c.flag} ${c.name} recruits ${troopAmount}k new troops (cost: ${troopCost}B).`;
+      break;
+    case 'upgrade_airforce':
+      const airCost=Math.round(airAmount*17);
+      newStats={treasury:Math.max(0,c.treasury-airCost),air_force:c.air_force+airAmount};
+      newsHeadline=`${c.flag} ${c.name} adds ${airAmount} new aircraft to its air force.`;
+      break;
+    case 'military_drills':
+      const drillCost={small:80,medium:150,large:300}[drillScale]||150;
+      const readBoost={small:5,medium:10,large:18}[drillScale]||10;
+      const morBoost={small:4,medium:8,large:14}[drillScale]||8;
+      newStats={treasury:Math.max(0,c.treasury-drillCost),military_readiness:Math.min(100,c.military_readiness+readBoost),military_morale:Math.min(100,c.military_morale+morBoost)};
+      newsHeadline=`${c.flag} ${c.name} conducts ${drillScale}-scale military exercises.`;
+      break;
+    case 'adjust_tax':
+      const taxDiff=newTax-c.tax_rate;
+      newStats={tax_rate:newTax,approval:Math.max(0,Math.min(100,c.approval-taxDiff)),treasury:c.treasury+Math.round(taxDiff*c.gdp/1000)};
+      newsHeadline=`${c.flag} ${c.name} adjusts ${document.getElementById('action-tax-type')?.value||'income'} tax rate to ${newTax}%.`;
+      newsCategory='economy';
+      break;
+    case 'propaganda':
+      const propCost=propIntensity*100;
+      newStats={treasury:Math.max(0,c.treasury-propCost),approval:Math.min(100,c.approval+propIntensity*2),civil_liberties:Math.max(0,c.civil_liberties-propIntensity)};
+      newsHeadline=`${c.flag} ${c.name} launches state ${document.getElementById('action-prop-type')?.value||'patriotic'} media campaign.`;
+      break;
+    case 'call_election':
+      newStats={stability:Math.max(0,c.stability-10)};
+      newsHeadline=`${c.flag} ${c.name} calls for early ${document.getElementById('action-election-type')?.value||'presidential'} elections.`;
+      break;
+    case 'spy_mission':
+      const spyCost={low:200,medium:350,high:500}[spyRisk]||200;
+      newStats={treasury:Math.max(0,c.treasury-spyCost)};
+      newsHeadline=`Intelligence operatives from ${c.flag} ${c.name} conduct a ${spyRisk}-risk mission targeting ${target?.flag} ${target?.name}.`;
+      break;
+    case 'counter_intel':
+      newStats={treasury:Math.max(0,c.treasury-150)};
+      newsHeadline=`${c.flag} ${c.name} strengthens counter-intelligence operations.`;
+      break;
   }
+
   if(Object.keys(newStats).length>0){
     await sb.from('countries').update({...newStats,updated_at:new Date().toISOString()}).eq('id',c.id);
     myCountry={...myCountry,...newStats};
@@ -948,7 +1154,7 @@ async function executeAction(type){
     if(existing) await sb.from('relations').update({...relationUpdate,updated_at:new Date().toISOString()}).eq('id',existing.id);
     else await sb.from('relations').insert({country_a:c.id,country_b:targetId,status:relationUpdate.status||'neutral',score:relationUpdate.score||0});
   }
-  await sb.from('actions').insert({player_id:currentPlayer.id,country_id:c.id,action_type:type,target_country:targetId||null,details:{msg}});
+  await sb.from('actions').insert({player_id:currentPlayer.id,country_id:c.id,action_type:type,target_country:targetId||null,details:{msg,type}});
   await sb.from('news').insert({headline:newsHeadline,body:msg?`Official statement: "${msg}"`:null,country_id:c.id,category:newsCategory});
   closeModal('action');
   toast(newsHeadline,'success');
@@ -1023,6 +1229,35 @@ async function loadNewsTab(){
   const el=document.getElementById('news-list');
   if(!news||news.length===0){el.innerHTML='<div class="empty-state">No intelligence reports yet.</div>';return;}
   el.innerHTML=news.map(n=>`<div class="news-item"><div class="news-headline">${n.headline}</div>${n.body?`<div class="news-body">${n.body}</div>`:''}<div class="news-meta"><span class="news-category cat-${n.category}">${n.category}</span>${new Date(n.created_at).toLocaleString()}${n.countries?` · ${n.countries.flag} ${n.countries.name}`:''}</div></div>`).join('');
+}
+
+// ── EXIT ROLE ─────────────────────────────────────────────────────────────────
+function confirmExitRole(){
+  document.getElementById('action-modal-content').innerHTML=`
+    <div class="modal-title">🚪 Resign Your Role</div>
+    <div style="background:rgba(192,57,43,0.1);border:1px solid rgba(192,57,43,0.3);padding:1rem;margin-bottom:1.5rem;font-size:0.9rem;color:var(--text-dim);line-height:1.6">
+      You are about to resign as <strong style="color:var(--gold)">${{head_of_state:'Head of State',head_of_government:'Head of Government',defense:'Minister of Defense',economy:'Minister of Economy',foreign_affairs:'Minister of Foreign Affairs',intelligence:'Minister of Intelligence'}[myRole?.role]}</strong> of <strong style="color:var(--gold)">${myCountry?.name}</strong>.<br><br>
+      Your position will become vacant and another player can claim it. You will be free to join a different country.
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn btn-danger" style="flex:1;padding:0.9rem" onclick="exitRole()">Confirm Resignation</button>
+      <button class="btn btn-ghost" style="padding:0.9rem 1.5rem" onclick="closeModal('action')">Cancel</button>
+    </div>
+  `;
+  openModal('action');
+}
+
+async function exitRole(){
+  if(!currentPlayer||!myRole) return;
+  const countryName=myCountry?.name;
+  const roleName={head_of_state:'Head of State',head_of_government:'Head of Government',defense:'Minister of Defense',economy:'Minister of Economy',foreign_affairs:'Minister of Foreign Affairs',intelligence:'Minister of Intelligence'}[myRole.role];
+  await sb.from('player_roles').delete().eq('player_id',currentPlayer.id);
+  await sb.from('news').insert({headline:`${currentPlayer.username} has resigned as ${roleName} of ${countryName}.`,category:'general'});
+  myRole=null; myCountry=null;
+  closeModal('action');
+  toast('You have resigned your role. You are free to join another country.','success');
+  document.getElementById('dashboard-content').innerHTML='<div class="empty-state">You have not joined a country yet. Visit the World tab to claim your role.</div>';
+  loadWorldTab();
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
