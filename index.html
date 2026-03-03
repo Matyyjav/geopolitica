@@ -819,16 +819,41 @@ function statRow(label,value,cls=''){
 
 async function joinRole(countryId,role){
   if(!currentPlayer) return;
+
+  // Block joining if already in a role
+  const {data:existing} = await sb.from('player_roles').select('id').eq('player_id',currentPlayer.id);
+  if(existing && existing.length > 0){
+    toast('You already hold a role. Resign first from My Nation tab.','error');
+    closeModal('country');
+    return;
+  }
+
   const {error}=await sb.from('player_roles').insert({player_id:currentPlayer.id,country_id:countryId,role});
   if(error){toast('Could not claim role: '+error.message,'error');return;}
+
   const c=allCountries.find(x=>x.id===countryId);
   const roleLabel={head_of_state:'Head of State',head_of_government:'Head of Government',defense:'Minister of Defense',economy:'Minister of Economy',foreign_affairs:'Minister of Foreign Affairs',intelligence:'Minister of Intelligence'}[role];
+
   await sb.from('news').insert({headline:`${currentPlayer.username} has been appointed ${roleLabel} of ${c?.name}`,category:'general',country_id:countryId});
+
+  // Reload player state fully
   await loadPlayer();
+
   closeModal('country');
   toast('You are now '+roleLabel+' of '+c?.name,'success');
+
+  // Refresh everything
   renderDashboard();
+  renderDiplomacy();
+  renderMilitary();
+  renderEconomy();
   loadWorldTab();
+
+  // Switch to dashboard so they see it immediately
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-dashboard').classList.add('active');
+  document.querySelectorAll('.nav-tab')[1].classList.add('active');
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
