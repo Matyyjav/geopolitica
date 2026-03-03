@@ -23,653 +23,247 @@
     --blue: #2980B9;
     --mono: 'Share Tech Mono', monospace;
   }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--dark); color:var(--text); font-family:'Crimson Pro',Georgia,serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,76,0.07) 0%, transparent 60%), repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(201,168,76,0.015) 60px,rgba(201,168,76,0.015) 61px), repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(201,168,76,0.015) 60px,rgba(201,168,76,0.015) 61px); pointer-events:none; z-index:0; }
+  .screen { display:none; min-height:100vh; position:relative; z-index:1; }
+  .screen.active { display:flex; flex-direction:column; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* LANDING */
+  #screen-landing { align-items:center; justify-content:center; text-align:center; padding:2rem; }
+  .landing-emblem { width:120px; height:120px; border:2px solid var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 2rem; position:relative; animation:pulse-ring 3s ease-in-out infinite; }
+  .landing-emblem::before { content:''; position:absolute; inset:6px; border:1px solid rgba(201,168,76,0.3); border-radius:50%; }
+  .landing-emblem-icon { font-size:3rem; }
+  @keyframes pulse-ring { 0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.3)} 50%{box-shadow:0 0 0 20px rgba(201,168,76,0)} }
+  .landing-title { font-family:'Cinzel',serif; font-size:clamp(2.5rem,8vw,5rem); font-weight:900; letter-spacing:0.15em; color:var(--gold); text-shadow:0 0 60px rgba(201,168,76,0.4); line-height:1; margin-bottom:0.5rem; }
+  .landing-sub { font-family:'Share Tech Mono',monospace; font-size:0.75rem; letter-spacing:0.3em; color:var(--text-dim); text-transform:uppercase; margin-bottom:3rem; }
+  .landing-desc { font-size:1.15rem; color:var(--text-dim); max-width:480px; line-height:1.8; margin-bottom:3rem; font-style:italic; }
+  .btn-group { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
+  .btn { font-family:'Cinzel',serif; font-size:0.8rem; letter-spacing:0.15em; font-weight:600; padding:0.85rem 2rem; border:1px solid var(--gold); background:transparent; color:var(--gold); cursor:pointer; transition:all 0.2s; text-transform:uppercase; position:relative; overflow:hidden; }
+  .btn::before { content:''; position:absolute; inset:0; background:var(--gold); transform:translateX(-100%); transition:transform 0.2s; z-index:-1; }
+  .btn:hover { color:var(--dark); }
+  .btn:hover::before { transform:translateX(0); }
+  .btn.btn-ghost { border-color:rgba(201,168,76,0.3); color:var(--text-dim); }
+  .btn.btn-ghost:hover { border-color:var(--gold); color:var(--dark); }
+  .btn.btn-danger { border-color:var(--red); color:var(--red); }
+  .btn.btn-danger:hover { color:white; }
+  .btn.btn-danger::before { background:var(--red); }
+  .btn.btn-success { border-color:var(--green); color:var(--green); }
+  .btn.btn-success:hover { color:white; }
+  .btn.btn-success::before { background:var(--green); }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
 
-  body {
-    background: var(--dark);
-    color: var(--text);
-    font-family: 'Crimson Pro', Georgia, serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  /* MODALS */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--dark2); border:1px solid var(--border-bright); padding:2.5rem; width:100%; max-width:420px; margin:1rem; position:relative; max-height:90vh; overflow-y:auto; }
+  .modal-title { font-family:'Cinzel',serif; font-size:1.2rem; letter-spacing:0.1em; color:var(--gold); margin-bottom:2rem; text-align:center; }
+  .form-group { margin-bottom:1.25rem; }
+  .form-group label { display:block; font-family:var(--mono); font-size:0.7rem; letter-spacing:0.2em; color:var(--text-dim); text-transform:uppercase; margin-bottom:0.5rem; }
+  .form-group input,.form-group select { width:100%; background:var(--dark3); border:1px solid var(--border); color:var(--text); padding:0.75rem 1rem; font-family:'Crimson Pro',serif; font-size:1rem; outline:none; transition:border-color 0.2s; }
+  .form-group input:focus,.form-group select:focus { border-color:var(--gold); }
+  .form-group select option { background:var(--dark3); }
+  .modal-close { position:absolute; top:1rem; right:1rem; background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:1.2rem; transition:color 0.2s; }
+  .modal-close:hover { color:var(--gold); }
+  .error-msg { color:#e74c3c; font-size:0.85rem; margin-bottom:1rem; padding:0.5rem; border:1px solid rgba(231,76,60,0.3); background:rgba(231,76,60,0.05); display:none; }
+  .error-msg.show { display:block; }
 
-  /* ── BACKGROUND ─────────────────────────────────────── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,76,0.07) 0%, transparent 60%),
-      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,168,76,0.015) 60px, rgba(201,168,76,0.015) 61px),
-      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,168,76,0.015) 60px, rgba(201,168,76,0.015) 61px);
-    pointer-events: none; z-index: 0;
-  }
+  /* NAV */
+  .nav { display:flex; align-items:center; padding:1rem 2rem; border-bottom:1px solid var(--border); background:rgba(7,9,15,0.95); backdrop-filter:blur(8px); position:sticky; top:0; z-index:50; gap:1rem; flex-wrap:wrap; }
+  .nav-brand { font-family:'Cinzel',serif; font-size:1.1rem; font-weight:900; letter-spacing:0.2em; color:var(--gold); margin-right:auto; }
+  .nav-tabs { display:flex; gap:0.25rem; flex-wrap:wrap; }
+  .nav-tab { font-family:var(--mono); font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; padding:0.5rem 1rem; background:none; border:1px solid transparent; color:var(--text-dim); cursor:pointer; transition:all 0.2s; }
+  .nav-tab:hover { color:var(--text); border-color:var(--border); }
+  .nav-tab.active { color:var(--gold); border-color:var(--border-bright); background:rgba(201,168,76,0.05); }
+  .nav-user { font-family:var(--mono); font-size:0.7rem; color:var(--text-dim); display:flex; align-items:center; gap:0.5rem; }
+  .nav-user span { color:var(--gold); }
 
-  /* ── SCREENS ─────────────────────────────────────────── */
-  .screen { display: none; min-height: 100vh; position: relative; z-index: 1; }
-  .screen.active { display: flex; flex-direction: column; }
+  /* MAIN */
+  .main-content { flex:1; padding:2rem; max-width:1600px; margin:0 auto; width:100%; }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  .section-header { margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+  .section-title { font-family:'Cinzel',serif; font-size:1.4rem; color:var(--gold); letter-spacing:0.1em; margin-bottom:0.25rem; }
+  .section-sub { font-family:var(--mono); font-size:0.65rem; color:var(--text-dim); letter-spacing:0.15em; text-transform:uppercase; }
+  .grid-2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; }
+  .grid-3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1.5rem; }
+  .grid-4 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; }
+  .card { background:var(--dark2); border:1px solid var(--border); padding:1.5rem; position:relative; transition:border-color 0.2s; }
+  .card:hover { border-color:rgba(201,168,76,0.4); }
+  .card-title { font-family:'Cinzel',serif; font-size:0.85rem; letter-spacing:0.1em; color:var(--gold); margin-bottom:1rem; text-transform:uppercase; }
+  .stat-row { display:flex; align-items:center; justify-content:space-between; padding:0.4rem 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.9rem; }
+  .stat-label { font-family:var(--mono); font-size:0.65rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+  .stat-value { font-weight:600; color:var(--text); }
+  .stat-value.good { color:var(--green); }
+  .stat-value.bad { color:var(--red); }
+  .stat-value.warn { color:#f39c12; }
+  .progress-wrap { margin:0.5rem 0; }
+  .progress-label { display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.25rem; }
+  .progress-bar { height:4px; background:rgba(255,255,255,0.06); position:relative; }
+  .progress-fill { height:100%; background:var(--gold); transition:width 0.6s ease; }
+  .progress-fill.green { background:var(--green); }
+  .progress-fill.red { background:var(--red); }
+  .progress-fill.blue { background:var(--blue); }
 
-  /* ── LANDING ─────────────────────────────────────────── */
-  #screen-landing {
-    align-items: center; justify-content: center;
-    text-align: center; padding: 2rem;
-  }
-
-  .landing-emblem {
-    width: 120px; height: 120px;
-    border: 2px solid var(--gold);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 2rem;
-    position: relative;
-    animation: pulse-ring 3s ease-in-out infinite;
-  }
-  .landing-emblem::before {
-    content: '';
-    position: absolute; inset: 6px;
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 50%;
-  }
-  .landing-emblem-icon { font-size: 3rem; }
-
-  @keyframes pulse-ring {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.3); }
-    50% { box-shadow: 0 0 0 20px rgba(201,168,76,0); }
-  }
-
-  .landing-title {
-    font-family: 'Cinzel', serif;
-    font-size: clamp(2.5rem, 8vw, 5rem);
-    font-weight: 900;
-    letter-spacing: 0.15em;
-    color: var(--gold);
-    text-shadow: 0 0 60px rgba(201,168,76,0.4);
-    line-height: 1;
-    margin-bottom: 0.5rem;
-  }
-
-  .landing-sub {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.75rem;
-    letter-spacing: 0.3em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    margin-bottom: 3rem;
-  }
-
-  .landing-desc {
-    font-size: 1.15rem;
-    color: var(--text-dim);
-    max-width: 480px;
-    line-height: 1.8;
-    margin-bottom: 3rem;
-    font-style: italic;
-  }
-
-  .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-
-  .btn {
-    font-family: 'Cinzel', serif;
-    font-size: 0.8rem;
-    letter-spacing: 0.15em;
-    font-weight: 600;
-    padding: 0.85rem 2rem;
-    border: 1px solid var(--gold);
-    background: transparent;
-    color: var(--gold);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-transform: uppercase;
+  /* ── WORLD MAP ─────────────────────────────────────── */
+  .map-container {
+    background: #0a1628;
+    border: 1px solid var(--border);
     position: relative;
     overflow: hidden;
+    cursor: grab;
+    user-select: none;
   }
-  .btn::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: var(--gold);
-    transform: translateX(-100%);
-    transition: transform 0.2s;
-    z-index: -1;
-  }
-  .btn:hover { color: var(--dark); }
-  .btn:hover::before { transform: translateX(0); }
-  .btn.btn-ghost { border-color: rgba(201,168,76,0.3); color: var(--text-dim); }
-  .btn.btn-ghost:hover { border-color: var(--gold); color: var(--dark); }
-  .btn.btn-danger { border-color: var(--red); color: var(--red); }
-  .btn.btn-danger:hover { color: white; }
-  .btn.btn-danger::before { background: var(--red); }
-  .btn.btn-success { border-color: var(--green); color: var(--green); }
-  .btn.btn-success:hover { color: white; }
-  .btn.btn-success::before { background: var(--green); }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .map-container:active { cursor: grabbing; }
+  .map-container svg { display: block; width: 100%; height: auto; }
 
-  /* ── AUTH MODAL ──────────────────────────────────────── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 100; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px);
+  .map-controls {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+    z-index: 10;
   }
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--dark2);
-    border: 1px solid var(--border-bright);
-    padding: 2.5rem;
-    width: 100%; max-width: 420px;
-    margin: 1rem;
-    position: relative;
-  }
-
-  .modal-title {
-    font-family: 'Cinzel', serif;
-    font-size: 1.2rem;
-    letter-spacing: 0.1em;
+  .map-btn {
+    width: 36px; height: 36px;
+    background: rgba(13,18,32,0.9);
+    border: 1px solid var(--border);
     color: var(--gold);
-    margin-bottom: 2rem;
-    text-align: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
   }
+  .map-btn:hover { border-color: var(--gold); background: rgba(201,168,76,0.1); }
 
-  .form-group { margin-bottom: 1.25rem; }
-  .form-group label {
-    display: block;
+  .map-legend {
+    position: absolute;
+    bottom: 1rem; left: 1rem;
+    background: rgba(7,9,15,0.85);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1rem;
     font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
+    font-size: 0.6rem;
     color: var(--text-dim);
     text-transform: uppercase;
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.1em;
+    z-index: 10;
   }
-  .form-group input, .form-group select {
-    width: 100%;
-    background: var(--dark3);
-    border: 1px solid var(--border);
-    color: var(--text);
+  .legend-item { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .map-tooltip {
+    position: absolute;
+    background: rgba(7,9,15,0.95);
+    border: 1px solid var(--border-bright);
     padding: 0.75rem 1rem;
-    font-family: 'Crimson Pro', serif;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
-  .form-group select option { background: var(--dark3); }
-
-  .modal-close {
-    position: absolute; top: 1rem; right: 1rem;
-    background: none; border: none; color: var(--text-dim);
-    cursor: pointer; font-size: 1.2rem;
-    transition: color 0.2s;
-  }
-  .modal-close:hover { color: var(--gold); }
-
-  .error-msg {
-    color: #e74c3c;
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-    padding: 0.5rem;
-    border: 1px solid rgba(231,76,60,0.3);
-    background: rgba(231,76,60,0.05);
+    pointer-events: none;
+    z-index: 20;
+    min-width: 180px;
     display: none;
   }
-  .error-msg.show { display: block; }
+  .map-tooltip.show { display: block; }
+  .tooltip-flag { font-size: 1.5rem; line-height: 1; }
+  .tooltip-name { font-family:'Cinzel',serif; font-size:0.9rem; color:var(--gold); margin: 0.2rem 0; }
+  .tooltip-stat { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.1em; }
 
-  /* ── NAV ─────────────────────────────────────────────── */
-  .nav {
-    display: flex; align-items: center;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(7,9,15,0.9);
-    backdrop-filter: blur(8px);
-    position: sticky; top: 0; z-index: 50;
-    gap: 1rem; flex-wrap: wrap;
-  }
-
-  .nav-brand {
-    font-family: 'Cinzel', serif;
-    font-size: 1.1rem;
-    font-weight: 900;
-    letter-spacing: 0.2em;
-    color: var(--gold);
-    margin-right: auto;
-  }
-
-  .nav-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-
-  .nav-tab {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 0.5rem 1rem;
-    background: none;
-    border: 1px solid transparent;
-    color: var(--text-dim);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .nav-tab:hover { color: var(--text); border-color: var(--border); }
-  .nav-tab.active { color: var(--gold); border-color: var(--border-bright); background: rgba(201,168,76,0.05); }
-
-  .nav-user {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .nav-user span { color: var(--gold); }
-
-  /* ── MAIN LAYOUT ─────────────────────────────────────── */
-  .main-content {
-    flex: 1;
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  /* ── TABS ────────────────────────────────────────────── */
-  .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
-
-  /* ── SECTION HEADER ──────────────────────────────────── */
-  .section-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .section-title {
-    font-family: 'Cinzel', serif;
-    font-size: 1.4rem;
-    color: var(--gold);
-    letter-spacing: 0.1em;
-    margin-bottom: 0.25rem;
-  }
-  .section-sub {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-
-  /* ── GRID LAYOUTS ────────────────────────────────────── */
-  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-
-  /* ── CARDS ───────────────────────────────────────────── */
-  .card {
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    padding: 1.5rem;
-    position: relative;
-    transition: border-color 0.2s;
-  }
-  .card:hover { border-color: rgba(201,168,76,0.4); }
-  .card-title {
-    font-family: 'Cinzel', serif;
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
-    color: var(--gold);
+  /* MAP MODE TOGGLE */
+  .map-mode-bar {
+    display: flex; gap: 0.5rem;
     margin-bottom: 1rem;
-    text-transform: uppercase;
-  }
-
-  /* ── STAT DISPLAY ────────────────────────────────────── */
-  .stat-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.4rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    font-size: 0.9rem;
-  }
-  .stat-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-  .stat-value { font-weight: 600; color: var(--text); }
-  .stat-value.good { color: var(--green); }
-  .stat-value.bad { color: var(--red); }
-  .stat-value.warn { color: #f39c12; }
-
-  /* ── PROGRESS BAR ────────────────────────────────────── */
-  .progress-wrap { margin: 0.5rem 0; }
-  .progress-label {
-    display: flex; justify-content: space-between;
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 0.25rem;
-  }
-  .progress-bar {
-    height: 4px;
-    background: rgba(255,255,255,0.06);
-    position: relative;
-  }
-  .progress-fill {
-    height: 100%;
-    background: var(--gold);
-    transition: width 0.6s ease;
-  }
-  .progress-fill.green { background: var(--green); }
-  .progress-fill.red { background: var(--red); }
-  .progress-fill.blue { background: var(--blue); }
-
-  /* ── COUNTRY FLAG CARD ───────────────────────────────── */
-  .country-card {
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    padding: 1.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex; flex-direction: column; gap: 0.5rem;
-  }
-  .country-card:hover {
-    border-color: var(--gold);
-    background: var(--dark3);
-    transform: translateY(-2px);
-  }
-  .country-flag { font-size: 2rem; line-height: 1; }
-  .country-name {
-    font-family: 'Cinzel', serif;
-    font-size: 0.9rem;
-    color: var(--text);
-    letter-spacing: 0.05em;
-  }
-  .country-meta {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .country-regime {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 0.55rem;
-    padding: 0.15rem 0.5rem;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: 0.25rem;
-  }
-  .regime-democracy { border-color: rgba(41,128,185,0.5); color: #5dade2; }
-  .regime-communist { border-color: rgba(192,57,43,0.5); color: #e74c3c; }
-  .regime-authoritarian { border-color: rgba(241,196,15,0.5); color: #f1c40f; }
-  .regime-dictatorship { border-color: rgba(127,140,141,0.5); color: #95a5a6; }
-  .regime-theocracy { border-color: rgba(155,89,182,0.5); color: #bb8fce; }
-  .regime-monarchy { border-color: rgba(201,168,76,0.5); color: var(--gold); }
-
-  /* ── NEWS FEED ───────────────────────────────────────── */
-  .news-item {
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .news-headline {
-    font-family: 'Cinzel', serif;
-    font-size: 0.9rem;
-    color: var(--text);
-    margin-bottom: 0.25rem;
-  }
-  .news-body { font-size: 0.9rem; color: var(--text-dim); line-height: 1.6; }
-  .news-meta {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    opacity: 0.5;
-    margin-top: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .news-category {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 0.55rem;
-    padding: 0.1rem 0.4rem;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-right: 0.5rem;
-  }
-  .cat-war { border-color: rgba(192,57,43,0.5); color: var(--red); }
-  .cat-economy { border-color: rgba(39,174,96,0.5); color: var(--green); }
-  .cat-diplomacy { border-color: rgba(41,128,185,0.5); color: var(--blue); }
-
-  /* ── DASHBOARD ───────────────────────────────────────── */
-  .dashboard-hero {
-    background: var(--dark2);
-    border: 1px solid var(--border-bright);
-    padding: 2rem;
-    margin-bottom: 2rem;
-    display: flex; align-items: center; gap: 2rem;
     flex-wrap: wrap;
   }
-  .dashboard-flag { font-size: 4rem; line-height: 1; }
-  .dashboard-country-name {
-    font-family: 'Cinzel', serif;
-    font-size: 2rem;
-    color: var(--gold);
-    letter-spacing: 0.05em;
-  }
-  .dashboard-role {
+  .mode-btn {
     font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    margin-top: 0.25rem;
-  }
-  .dashboard-capital {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--text-dim);
+    font-size: 0.6rem;
     letter-spacing: 0.15em;
-    margin-top: 0.25rem;
-  }
-
-  /* ── DOMINANCE TICKER ────────────────────────────────── */
-  .dominance-bar {
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    padding: 1rem 1.5rem;
-    margin-bottom: 2rem;
-  }
-  .dominance-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--text-dim);
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    margin-bottom: 0.75rem;
-  }
-  .dominance-entries { display: flex; flex-direction: column; gap: 0.5rem; }
-  .dominance-entry { display: flex; align-items: center; gap: 1rem; }
-  .dominance-entry-flag { font-size: 1rem; min-width: 1.5rem; }
-  .dominance-entry-name {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    min-width: 140px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .dominance-entry-bar {
-    flex: 1; height: 6px;
-    background: rgba(255,255,255,0.05);
-  }
-  .dominance-entry-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold-dim), var(--gold));
-    transition: width 0.8s ease;
-  }
-  .dominance-entry-pct {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--gold);
-    min-width: 3rem;
-    text-align: right;
-  }
-
-  /* ── ACTION PANEL ────────────────────────────────────── */
-  .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
-  .action-btn {
-    background: var(--dark3);
+    padding: 0.4rem 0.8rem;
+    background: none;
     border: 1px solid var(--border);
-    padding: 1.25rem;
+    color: var(--text-dim);
     cursor: pointer;
     transition: all 0.2s;
-    text-align: left;
-    position: relative;
-    overflow: hidden;
   }
-  .action-btn:hover { border-color: var(--gold); background: var(--dark4); }
-  .action-btn-icon { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
-  .action-btn-name {
-    font-family: 'Cinzel', serif;
-    font-size: 0.8rem;
-    color: var(--text);
-    display: block;
-    margin-bottom: 0.25rem;
-    letter-spacing: 0.05em;
-  }
-  .action-btn-desc {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    line-height: 1.4;
-  }
-  .action-btn-cost {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--gold-dim);
-    margin-top: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
+  .mode-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.05); }
 
-  /* ── RELATIONS TABLE ─────────────────────────────────── */
-  .relations-list { display: flex; flex-direction: column; gap: 0.5rem; }
-  .relation-item {
-    display: flex; align-items: center; gap: 1rem;
-    padding: 0.75rem 1rem;
-    background: var(--dark3);
-    border: 1px solid var(--border);
-  }
-  .relation-flag { font-size: 1.2rem; }
-  .relation-name { font-family: 'Cinzel', serif; font-size: 0.85rem; flex: 1; }
-  .relation-status {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 0.2rem 0.6rem;
-    border: 1px solid var(--border);
-  }
-  .status-ally { border-color: rgba(39,174,96,0.5); color: var(--green); }
-  .status-at_war { border-color: rgba(192,57,43,0.5); color: var(--red); }
-  .status-neutral { border-color: var(--border); color: var(--text-dim); }
-  .status-sanctioned { border-color: rgba(241,196,15,0.4); color: #f1c40f; }
-  .status-pact { border-color: rgba(41,128,185,0.5); color: var(--blue); }
-  .relation-score {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    min-width: 3rem;
-    text-align: right;
-  }
+  /* DOMINANCE BAR */
+  .dominance-bar { background:var(--dark2); border:1px solid var(--border); padding:1rem 1.5rem; margin-bottom:1.5rem; }
+  .dominance-label { font-family:var(--mono); font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.2em; margin-bottom:0.75rem; }
+  .dominance-entries { display:flex; flex-direction:column; gap:0.5rem; }
+  .dominance-entry { display:flex; align-items:center; gap:1rem; }
+  .dominance-entry-flag { font-size:1rem; min-width:1.5rem; }
+  .dominance-entry-name { font-family:var(--mono); font-size:0.65rem; color:var(--text-dim); min-width:140px; text-transform:uppercase; letter-spacing:0.05em; }
+  .dominance-entry-bar { flex:1; height:6px; background:rgba(255,255,255,0.05); }
+  .dominance-entry-fill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); transition:width 0.8s ease; }
+  .dominance-entry-pct { font-family:var(--mono); font-size:0.65rem; color:var(--gold); min-width:3rem; text-align:right; }
 
-  /* ── LOADING ─────────────────────────────────────────── */
-  .loading {
-    display: flex; align-items: center; justify-content: center;
-    padding: 3rem; color: var(--text-dim);
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-  .loading::before {
-    content: '';
-    display: inline-block;
-    width: 16px; height: 16px;
-    border: 1px solid var(--gold-dim);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    margin-right: 0.75rem;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  /* DASHBOARD */
+  .dashboard-hero { background:var(--dark2); border:1px solid var(--border-bright); padding:2rem; margin-bottom:2rem; display:flex; align-items:center; gap:2rem; flex-wrap:wrap; }
+  .dashboard-flag { font-size:4rem; line-height:1; }
+  .dashboard-country-name { font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); letter-spacing:0.05em; }
+  .dashboard-role { font-family:var(--mono); font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.2em; margin-top:0.25rem; }
+  .big-number { font-family:'Cinzel',serif; font-size:2rem; color:var(--gold); line-height:1; }
+  .big-number.bad { color: var(--red); }
+  .big-number-label { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.15em; margin-top:0.25rem; }
+  .action-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+  .action-btn { background:var(--dark3); border:1px solid var(--border); padding:1.25rem; cursor:pointer; transition:all 0.2s; text-align:left; position:relative; overflow:hidden; }
+  .action-btn:hover { border-color:var(--gold); background:var(--dark4); }
+  .action-btn-icon { font-size:1.5rem; margin-bottom:0.5rem; display:block; }
+  .action-btn-name { font-family:'Cinzel',serif; font-size:0.8rem; color:var(--text); display:block; margin-bottom:0.25rem; letter-spacing:0.05em; }
+  .action-btn-desc { font-size:0.8rem; color:var(--text-dim); line-height:1.4; }
+  .action-btn-cost { font-family:var(--mono); font-size:0.6rem; color:var(--gold-dim); margin-top:0.5rem; text-transform:uppercase; letter-spacing:0.1em; }
 
-  /* ── TOAST ───────────────────────────────────────────── */
-  #toast-container {
-    position: fixed; bottom: 2rem; right: 2rem;
-    z-index: 200; display: flex; flex-direction: column; gap: 0.5rem;
-  }
-  .toast {
-    background: var(--dark2);
-    border: 1px solid var(--border-bright);
-    padding: 1rem 1.5rem;
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    color: var(--gold);
-    animation: slide-in 0.3s ease;
-    max-width: 320px;
-  }
-  .toast.error { border-color: rgba(192,57,43,0.6); color: var(--red); }
-  .toast.success { border-color: rgba(39,174,96,0.6); color: var(--green); }
-  @keyframes slide-in { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  /* COUNTRY REGIME TAGS */
+  .country-regime { display:inline-block; font-family:var(--mono); font-size:0.55rem; padding:0.15rem 0.5rem; border:1px solid var(--border); color:var(--text-dim); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.25rem; }
+  .regime-democracy { border-color:rgba(41,128,185,0.5); color:#5dade2; }
+  .regime-communist { border-color:rgba(192,57,43,0.5); color:#e74c3c; }
+  .regime-authoritarian { border-color:rgba(241,196,15,0.5); color:#f1c40f; }
+  .regime-dictatorship { border-color:rgba(127,140,141,0.5); color:#95a5a6; }
+  .regime-theocracy { border-color:rgba(155,89,182,0.5); color:#bb8fce; }
+  .regime-monarchy { border-color:rgba(201,168,76,0.5); color:var(--gold); }
 
-  /* ── MISC ────────────────────────────────────────────── */
-  .tag {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 0.55rem;
-    padding: 0.15rem 0.5rem;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-  }
-  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
-  .empty-state {
-    padding: 3rem; text-align: center;
-    color: var(--text-dim); font-family: var(--mono);
-    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
-  }
+  /* NEWS */
+  .news-item { padding:1rem 0; border-bottom:1px solid var(--border); }
+  .news-headline { font-family:'Cinzel',serif; font-size:0.9rem; color:var(--text); margin-bottom:0.25rem; }
+  .news-body { font-size:0.9rem; color:var(--text-dim); line-height:1.6; }
+  .news-meta { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); opacity:0.5; margin-top:0.25rem; text-transform:uppercase; letter-spacing:0.1em; }
+  .news-category { display:inline-block; font-family:var(--mono); font-size:0.55rem; padding:0.1rem 0.4rem; border:1px solid var(--border); color:var(--text-dim); text-transform:uppercase; letter-spacing:0.1em; margin-right:0.5rem; }
+  .cat-war { border-color:rgba(192,57,43,0.5); color:var(--red); }
+  .cat-economy { border-color:rgba(39,174,96,0.5); color:var(--green); }
+  .cat-diplomacy { border-color:rgba(41,128,185,0.5); color:var(--blue); }
 
-  .big-number {
-    font-family: 'Cinzel', serif;
-    font-size: 2rem;
-    color: var(--gold);
-    line-height: 1;
-  }
-  .big-number-label {
-    font-family: var(--mono);
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-top: 0.25rem;
-  }
+  /* RELATIONS */
+  .relations-list { display:flex; flex-direction:column; gap:0.5rem; }
+  .relation-item { display:flex; align-items:center; gap:1rem; padding:0.75rem 1rem; background:var(--dark3); border:1px solid var(--border); }
+  .relation-flag { font-size:1.2rem; }
+  .relation-name { font-family:'Cinzel',serif; font-size:0.85rem; flex:1; }
+  .relation-status { font-family:var(--mono); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.1em; padding:0.2rem 0.6rem; border:1px solid var(--border); }
+  .status-ally { border-color:rgba(39,174,96,0.5); color:var(--green); }
+  .status-at_war { border-color:rgba(192,57,43,0.5); color:var(--red); }
+  .status-neutral { border-color:var(--border); color:var(--text-dim); }
+  .status-sanctioned { border-color:rgba(241,196,15,0.4); color:#f1c40f; }
+  .status-pact { border-color:rgba(41,128,185,0.5); color:var(--blue); }
+  .relation-score { font-family:var(--mono); font-size:0.75rem; min-width:3rem; text-align:right; }
 
-  @media (max-width: 600px) {
-    .main-content { padding: 1rem; }
-    .nav { padding: 0.75rem 1rem; }
-    .dashboard-hero { padding: 1.25rem; gap: 1rem; }
-  }
+  /* MISC */
+  .loading { display:flex; align-items:center; justify-content:center; padding:3rem; color:var(--text-dim); font-family:var(--mono); font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase; }
+  .loading::before { content:''; display:inline-block; width:16px; height:16px; border:1px solid var(--gold-dim); border-top-color:var(--gold); border-radius:50%; margin-right:0.75rem; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  #toast-container { position:fixed; bottom:2rem; right:2rem; z-index:200; display:flex; flex-direction:column; gap:0.5rem; }
+  .toast { background:var(--dark2); border:1px solid var(--border-bright); padding:1rem 1.5rem; font-family:var(--mono); font-size:0.7rem; letter-spacing:0.1em; color:var(--gold); animation:slide-in 0.3s ease; max-width:320px; }
+  .toast.error { border-color:rgba(192,57,43,0.6); color:var(--red); }
+  .toast.success { border-color:rgba(39,174,96,0.6); color:var(--green); }
+  @keyframes slide-in { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  .divider { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+  .empty-state { padding:3rem; text-align:center; color:var(--text-dim); font-family:var(--mono); font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; }
+  @media(max-width:600px){.main-content{padding:1rem}.nav{padding:0.75rem 1rem}}
 </style>
 </head>
 <body>
 
 <!-- LANDING -->
 <div id="screen-landing" class="screen active">
-  <div class="landing-emblem">
-    <span class="landing-emblem-icon">🌍</span>
-  </div>
+  <div class="landing-emblem"><span class="landing-emblem-icon">🌍</span></div>
   <h1 class="landing-title">GEOPOLITICA</h1>
   <p class="landing-sub">The World Awaits Its Leaders</p>
   <p class="landing-desc">A multiplayer political strategy game. Lead a real nation. Command armies. Build alliances. Dominate the world.</p>
@@ -679,21 +273,21 @@
   </div>
 </div>
 
-<!-- GAME SCREEN -->
+<!-- GAME -->
 <div id="screen-game" class="screen">
   <nav class="nav">
     <span class="nav-brand">GEOPOLITICA</span>
     <div class="nav-tabs">
-      <button class="nav-tab active" onclick="switchTab('world')">🌍 World</button>
-      <button class="nav-tab" onclick="switchTab('dashboard')">🏛 My Nation</button>
-      <button class="nav-tab" onclick="switchTab('diplomacy')">🤝 Diplomacy</button>
-      <button class="nav-tab" onclick="switchTab('military')">⚔️ Military</button>
-      <button class="nav-tab" onclick="switchTab('economy')">💰 Economy</button>
-      <button class="nav-tab" onclick="switchTab('news')">📰 Intel</button>
+      <button class="nav-tab active" onclick="switchTab('world',this)">🌍 World</button>
+      <button class="nav-tab" onclick="switchTab('dashboard',this)">🏛 My Nation</button>
+      <button class="nav-tab" onclick="switchTab('diplomacy',this)">🤝 Diplomacy</button>
+      <button class="nav-tab" onclick="switchTab('military',this)">⚔️ Military</button>
+      <button class="nav-tab" onclick="switchTab('economy',this)">💰 Economy</button>
+      <button class="nav-tab" onclick="switchTab('news',this)">📰 Intel</button>
     </div>
     <div class="nav-user">
       <span id="nav-username">—</span>
-      <button class="btn btn-ghost" style="padding:0.35rem 0.75rem;font-size:0.6rem;" onclick="logout()">Exit</button>
+      <button class="btn btn-ghost" style="padding:0.35rem 0.75rem;font-size:0.6rem" onclick="logout()">Exit</button>
     </div>
   </nav>
 
@@ -703,72 +297,64 @@
     <div id="tab-world" class="tab-panel active">
       <div class="section-header">
         <div class="section-title">World Map</div>
-        <div class="section-sub">All nations — click a country to view its status or join its government</div>
+        <div class="section-sub">Click any country to view its status or join its government</div>
       </div>
 
-      <!-- Dominance Leaderboard -->
-      <div class="dominance-bar">
-        <div class="dominance-label">Global Dominance Race — Victory at 75%</div>
-        <div class="dominance-entries" id="dominance-list">
-          <div class="loading">Loading dominance data...</div>
+      <div class="map-mode-bar">
+        <button class="mode-btn active" onclick="setMapMode('unique',this)">🎨 Country Colors</button>
+        <button class="mode-btn" onclick="setMapMode('regime',this)">🏛 By Regime</button>
+        <button class="mode-btn" onclick="setMapMode('dominance',this)">⚡ By Power</button>
+        <button class="mode-btn" onclick="setMapMode('relations',this)">🤝 My Relations</button>
+      </div>
+
+      <div class="map-container" id="map-container" style="height:520px">
+        <div id="map-svg-wrap" style="width:100%;height:100%;overflow:hidden;position:relative">
+          <div class="loading" style="height:100%">Loading world map...</div>
         </div>
+        <div class="map-controls">
+          <button class="map-btn" onclick="mapZoom(1.3)" title="Zoom in">+</button>
+          <button class="map-btn" onclick="mapZoom(0.77)" title="Zoom out">−</button>
+          <button class="map-btn" onclick="mapReset()" title="Reset">⌂</button>
+        </div>
+        <div class="map-tooltip" id="map-tooltip"></div>
+        <div class="map-legend" id="map-legend"></div>
       </div>
 
-      <!-- Countries Grid -->
-      <div id="countries-grid" class="grid-4">
-        <div class="loading">Loading nations...</div>
+      <div style="margin-top:1.5rem">
+        <div class="dominance-bar">
+          <div class="dominance-label">Global Dominance Race — Victory at 75%</div>
+          <div class="dominance-entries" id="dominance-list"><div class="loading">Loading...</div></div>
+        </div>
       </div>
     </div>
 
     <!-- DASHBOARD TAB -->
     <div id="tab-dashboard" class="tab-panel">
-      <div id="dashboard-content">
-        <div class="empty-state">You have not joined a country yet. Visit the World tab to claim your role.</div>
-      </div>
+      <div id="dashboard-content"><div class="empty-state">You have not joined a country yet. Visit the World tab to claim your role.</div></div>
     </div>
 
     <!-- DIPLOMACY TAB -->
     <div id="tab-diplomacy" class="tab-panel">
-      <div class="section-header">
-        <div class="section-title">Diplomatic Relations</div>
-        <div class="section-sub">Manage alliances, pacts, sanctions and declarations</div>
-      </div>
-      <div id="diplomacy-content">
-        <div class="empty-state">Join a country to access diplomatic tools.</div>
-      </div>
+      <div class="section-header"><div class="section-title">Diplomatic Relations</div><div class="section-sub">Manage alliances, pacts, sanctions and declarations</div></div>
+      <div id="diplomacy-content"><div class="empty-state">Join a country to access diplomatic tools.</div></div>
     </div>
 
     <!-- MILITARY TAB -->
     <div id="tab-military" class="tab-panel">
-      <div class="section-header">
-        <div class="section-title">Military Command</div>
-        <div class="section-sub">Armed forces, readiness, and operations</div>
-      </div>
-      <div id="military-content">
-        <div class="empty-state">Join a country to access military command.</div>
-      </div>
+      <div class="section-header"><div class="section-title">Military Command</div><div class="section-sub">Armed forces, readiness, and operations</div></div>
+      <div id="military-content"><div class="empty-state">Join a country to access military command.</div></div>
     </div>
 
     <!-- ECONOMY TAB -->
     <div id="tab-economy" class="tab-panel">
-      <div class="section-header">
-        <div class="section-title">Economic Affairs</div>
-        <div class="section-sub">Treasury, trade, taxation and sanctions</div>
-      </div>
-      <div id="economy-content">
-        <div class="empty-state">Join a country to access economic controls.</div>
-      </div>
+      <div class="section-header"><div class="section-title">Economic Affairs</div><div class="section-sub">Treasury, trade, taxation and sanctions</div></div>
+      <div id="economy-content"><div class="empty-state">Join a country to access economic controls.</div></div>
     </div>
 
     <!-- NEWS TAB -->
     <div id="tab-news" class="tab-panel">
-      <div class="section-header">
-        <div class="section-title">Intelligence Feed</div>
-        <div class="section-sub">World events, diplomatic signals, and breaking developments</div>
-      </div>
-      <div id="news-list">
-        <div class="loading">Loading intelligence...</div>
-      </div>
+      <div class="section-header"><div class="section-title">Intelligence Feed</div><div class="section-sub">World events, diplomatic signals, and breaking developments</div></div>
+      <div id="news-list"><div class="loading">Loading intelligence...</div></div>
     </div>
 
   </div>
@@ -780,18 +366,10 @@
     <button class="modal-close" onclick="closeModal('login')">✕</button>
     <div class="modal-title">Enter the World</div>
     <div id="login-error" class="error-msg"></div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="your@email.com">
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="••••••••">
-    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
     <button class="btn" style="width:100%;margin-top:0.5rem" onclick="login()">Enter</button>
-    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-dim)">
-      No account? <span style="color:var(--gold);cursor:pointer" onclick="closeModal('login');openModal('register')">Register here</span>
-    </p>
+    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-dim)">No account? <span style="color:var(--gold);cursor:pointer" onclick="closeModal('login');openModal('register')">Register here</span></p>
   </div>
 </div>
 
@@ -800,226 +378,422 @@
     <button class="modal-close" onclick="closeModal('register')">✕</button>
     <div class="modal-title">Create Your Identity</div>
     <div id="register-error" class="error-msg"></div>
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="reg-username" placeholder="Your name in history">
-    </div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="reg-email" placeholder="your@email.com">
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="reg-password" placeholder="Min 6 characters">
-    </div>
+    <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="Your name in history"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="your@email.com"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="Min 6 characters"></div>
     <button class="btn" style="width:100%;margin-top:0.5rem" onclick="register()">Begin</button>
-    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-dim)">
-      Already registered? <span style="color:var(--gold);cursor:pointer" onclick="closeModal('register');openModal('login')">Sign in</span>
-    </p>
+    <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-dim)">Already registered? <span style="color:var(--gold);cursor:pointer" onclick="closeModal('register');openModal('login')">Sign in</span></p>
   </div>
 </div>
 
-<!-- COUNTRY DETAIL MODAL -->
+<!-- COUNTRY MODAL -->
 <div id="modal-country" class="modal-overlay">
-  <div class="modal" style="max-width:560px">
-    <button class="modal-close" onclick="closeModal('country')">✕</button>
-    <div id="country-modal-content"></div>
-  </div>
+  <div class="modal" style="max-width:560px"><button class="modal-close" onclick="closeModal('country')">✕</button><div id="country-modal-content"></div></div>
 </div>
 
 <!-- ACTION MODAL -->
 <div id="modal-action" class="modal-overlay">
-  <div class="modal" style="max-width:480px">
-    <button class="modal-close" onclick="closeModal('action')">✕</button>
-    <div id="action-modal-content"></div>
-  </div>
+  <div class="modal" style="max-width:480px"><button class="modal-close" onclick="closeModal('action')">✕</button><div id="action-modal-content"></div></div>
 </div>
 
-<!-- TOAST -->
 <div id="toast-container"></div>
 
 <script>
-// ── SUPABASE INIT ─────────────────────────────────────────────────────────────
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://qjzpyaigaxpmilkyqjfd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2Tf5FfXIk9WvG9WSQCDL0w_Jq-6B7r-';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let currentUser = null;
-let currentPlayer = null;
-let myRole = null;
-let myCountry = null;
-let allCountries = [];
+let currentUser=null, currentPlayer=null, myRole=null, myCountry=null, allCountries=[];
+let mapMode='unique', mapScale=1, mapX=0, mapY=0, isDragging=false, dragStart={x:0,y:0};
+
+// ── COUNTRY DATA ──────────────────────────────────────────────────────────────
+// Unique colors for each country (classic political map style)
+const COUNTRY_COLORS = {
+  USA:'#4A7C59', CHN:'#C0392B', RUS:'#8E6DBE', DEU:'#E8A838', GBR:'#E8625A',
+  FRA:'#5B8DD9', JPN:'#E07B6A', IND:'#E6A817', BRA:'#5CA05C', CAN:'#D4956A',
+  AUS:'#7BBFBF', KOR:'#B07AB0', SAU:'#D4A843', TUR:'#E87070', MEX:'#6BAF6B',
+  IDN:'#D4736A', NGA:'#7AAF7A', ZAF:'#AF8C5C', ARG:'#5C8CAF', PRK:'#A05050',
+  IRN:'#8C7AAF', ISR:'#7AB0D4', PAK:'#78A878', UKR:'#D4C456', POL:'#C47A8A',
+  CZE:'#4A8CA0', SWE:'#5B9ED4', NOR:'#E87A5B', FIN:'#8CBFA8', DNK:'#D45B5B',
+  NLD:'#E8A050', BEL:'#D4AF3C', CHE:'#C45C5C', AUT:'#B05050', ESP:'#D48C3C',
+  PRT:'#5C9C5C', ITA:'#6BAF8C', GRC:'#5B8CC8', HUN:'#C47A3C', ROU:'#8CB05C',
+  BGR:'#7A8CAF', SRB:'#AF7A7A', HRV:'#5C8CAF', SVK:'#78A878', SVN:'#A0C87A',
+  LTU:'#C8A050', LVA:'#A05050', EST:'#5CA0B0', BLR:'#7A9C7A', MDA:'#C07A5C',
+  GEO:'#A08C5C', ARM:'#8C6CAF', AZE:'#5C8C78', KAZ:'#D4AF50', UZB:'#8CB07A',
+  TKM:'#5CAF8C', KGZ:'#7A9CB0', TJK:'#AF8C7A', MNG:'#C09050', MMR:'#8C7A5C',
+  THA:'#5C9C8C', VNM:'#C05C5C', KHM:'#AF8C5C', LAO:'#7A9C5C', PHL:'#5C8CB0',
+  MYS:'#C8A83C', SGP:'#E87A7A', BRN:'#7AAF7A', TLS:'#AF7A5C', BGD:'#5C9C5C',
+  LKA:'#C87A3C', NPL:'#B05C5C', BTN:'#AF8C5C', MDV:'#5C8CC8', AFG:'#8C7A5C',
+  IRQ:'#AF8C5C', SYR:'#7A8CAF', LBN:'#C87A7A', JOR:'#AF8C5C', ISR2:'#7AB0D4',
+  YEM:'#8C7A50', OMN:'#C89050', ARE:'#5CAF8C', QAT:'#8C5CAF', KWT:'#C8A850',
+  BHR:'#E87A50', EGY:'#C8A850', LBY:'#7A9C7A', TUN:'#C87A5C', DZA:'#5C8C78',
+  MAR:'#C8843C', MRT:'#7A9C7A', MLI:'#C8A850', NER:'#AF8C50', TCD:'#7AAF7A',
+  SDN:'#C87A50', SSD:'#8C9C5C', ETH:'#5C9C5C', SOM:'#C8A850', KEN:'#7A9C50',
+  TZA:'#5C8C78', MOZ:'#AF8C5C', ZWE:'#7A9C5C', ZMB:'#C8A850', MWI:'#8C6C5C',
+  UGA:'#5C9C7A', RWA:'#C87A5C', BDI:'#8C7A50', COD:'#5C8CAF', COG:'#7AAF7A',
+  CMR:'#C8A850', CAF:'#AF8C5C', GAB:'#5CAF8C', GNQ:'#7A9C7A', AGO:'#C87A50',
+  NAM:'#8CAF7A', BWA:'#7ABFBF', LSO:'#C87A7A', SWZ:'#5C8C78', MDG:'#C8A050',
+  MUS:'#7AB0D4', SYC:'#5CAF7A', CPV:'#C87A50', STP:'#7AAF5C', COM:'#AF8C7A',
+  DJI:'#5C8CAF', ERI:'#C8A050', GHA:'#7AAF5C', CIV:'#C87A3C', LBR:'#5C9C5C',
+  SLE:'#C87A7A', GIN:'#7A9C7A', GNB:'#C8A850', SEN:'#5C8C78', GMB:'#AF8C5C',
+  BFA:'#7AAF7A', TGO:'#C87A50', BEN:'#8C9C5C', NGA2:'#7AAF7A',
+  MEX2:'#6BAF6B', GTM:'#5C8C78', BLZ:'#C8A050', HND:'#7A9C7A', SLV:'#C87A5C',
+  NIC:'#5C9C5C', CRI:'#C8A850', PAN:'#7AB0D4', CUB:'#C85C5C', JAM:'#5CAF7A',
+  HTI:'#AF8C5C', DOM:'#5C8CAF', PRI:'#C87A7A', TTO:'#7AAF5C', BRB:'#C8A050',
+  GUY:'#5C8C78', SUR:'#C87A50', ECU:'#7AAF7A', PER:'#C87A3C', BOL:'#5C9C7A',
+  PRY:'#C8A850', URY:'#5C8CAF', CHL:'#C87A7A', VEN:'#7AAF5C', COL:'#C8A050',
+  ISL:'#5C8C78', IRL:'#5C9C5C', GBR2:'#E8625A', MLT:'#C87A7A', CYP:'#C8A050',
+  ALB:'#C85C5C', MKD:'#7A9CAF', BIH:'#5C8C78', MNE:'#C87A50', XKX:'#8CAF7A',
+  LUX:'#C8A050', LIE:'#5C8CAF', MCO:'#C85C5C', AND:'#7AAF5C', SMR:'#C8A850',
+  VAT:'#F0E8C8', NZL:'#5C9CAF', FJI:'#C8A050', PNG:'#7AAF5C', SLB:'#5C8C78',
+  VUT:'#C87A50', WSM:'#8CAF7A', TON:'#C85C5C', KIR:'#5C9C5C', FSM:'#C8A850',
+  MHL:'#7AB0D4', PLW:'#5CAF7A', NRU:'#C87A7A',
+};
+
+// ISO code → SVG path id mapping (Natural Earth / standard SVG maps use these)
+const COUNTRY_ISO = {
+  'af':'AFG','al':'ALB','dz':'DZA','ao':'AGO','ar':'ARG','am':'ARM','au':'AUS',
+  'at':'AUT','az':'AZE','bs':'BHS','bh':'BHR','bd':'BGD','by':'BLR','be':'BEL',
+  'bz':'BLZ','bj':'BEN','bt':'BTN','bo':'BOL','ba':'BIH','bw':'BWA','br':'BRA',
+  'bn':'BRN','bg':'BGR','bf':'BFA','bi':'BDI','cv':'CPV','kh':'KHM','cm':'CMR',
+  'ca':'CAN','cf':'CAF','td':'TCD','cl':'CHL','cn':'CHN','co':'COL','km':'COM',
+  'cd':'COD','cg':'COG','cr':'CRI','hr':'HRV','cu':'CUB','cy':'CYP','cz':'CZE',
+  'dk':'DNK','dj':'DJI','do':'DOM','ec':'ECU','eg':'EGY','sv':'SLV','gq':'GNQ',
+  'er':'ERI','ee':'EST','et':'ETH','fj':'FJI','fi':'FIN','fr':'FRA','ga':'GAB',
+  'gm':'GMB','ge':'GEO','de':'DEU','gh':'GHA','gr':'GRC','gt':'GTM','gn':'GIN',
+  'gw':'GNB','gy':'GUY','ht':'HTI','hn':'HND','hu':'HUN','is':'ISL','in':'IND',
+  'id':'IDN','ir':'IRN','iq':'IRQ','ie':'IRL','il':'ISR','it':'ITA','jm':'JAM',
+  'jp':'JPN','jo':'JOR','kz':'KAZ','ke':'KEN','kp':'PRK','kr':'KOR','kw':'KWT',
+  'kg':'KGZ','la':'LAO','lv':'LVA','lb':'LBN','ls':'LSO','lr':'LBR','ly':'LBY',
+  'lt':'LTU','lu':'LUX','mg':'MDG','mw':'MWI','my':'MYS','mv':'MDV','ml':'MLI',
+  'mt':'MLT','mr':'MRT','mx':'MEX','md':'MDA','mn':'MNG','me':'MNE','ma':'MAR',
+  'mz':'MOZ','mm':'MMR','na':'NAM','np':'NPL','nl':'NLD','nz':'NZL','ni':'NIC',
+  'ne':'NER','ng':'NGA','no':'NOR','om':'OMN','pk':'PAK','pa':'PAN','pg':'PNG',
+  'py':'PRY','pe':'PER','ph':'PHL','pl':'POL','pt':'PRT','qa':'QAT','ro':'ROU',
+  'ru':'RUS','rw':'RWA','sa':'SAU','sn':'SEN','rs':'SRB','sl':'SLE','sk':'SVK',
+  'si':'SVN','so':'SOM','za':'ZAF','ss':'SSD','es':'ESP','lk':'LKA','sd':'SDN',
+  'sr':'SUR','sz':'SWZ','se':'SWE','ch':'CHE','sy':'SYR','tw':'TWN','tj':'TJK',
+  'tz':'TZA','th':'THA','tl':'TLS','tg':'TGO','tt':'TTO','tn':'TUN','tr':'TUR',
+  'tm':'TKM','ug':'UGA','ua':'UKR','ae':'ARE','gb':'GBR','us':'USA','uy':'URY',
+  'uz':'UZB','ve':'VEN','vn':'VNM','ye':'YEM','zm':'ZMB','zw':'ZWE',
+};
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    await loadPlayer();
-    showGame();
-  }
-
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      currentUser = session.user;
-      await loadPlayer();
-      showGame();
-    } else if (event === 'SIGNED_OUT') {
-      currentUser = null; currentPlayer = null; myRole = null; myCountry = null;
-      showLanding();
-    }
+  const { data:{session} } = await sb.auth.getSession();
+  if (session) { currentUser=session.user; await loadPlayer(); showGame(); }
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session){currentUser=session.user;await loadPlayer();showGame();}
+    else if(event==='SIGNED_OUT'){currentUser=null;currentPlayer=null;myRole=null;myCountry=null;showLanding();}
   });
 }
 
 async function loadPlayer() {
-  if (!currentUser) return;
-  const { data } = await sb.from('players').select('*').eq('email', currentUser.email).single();
-  currentPlayer = data;
-  if (currentPlayer) {
-    const { data: role } = await sb.from('player_roles')
-      .select('*, countries(*)')
-      .eq('player_id', currentPlayer.id)
-      .single();
-    if (role) { myRole = role; myCountry = role.countries; }
+  if(!currentUser) return;
+  const {data} = await sb.from('players').select('*').eq('email',currentUser.email).single();
+  currentPlayer=data;
+  if(currentPlayer){
+    const {data:role} = await sb.from('player_roles').select('*,countries(*)').eq('player_id',currentPlayer.id).single();
+    if(role){myRole=role;myCountry=role.countries;}
   }
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-async function login() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass = document.getElementById('login-password').value;
-  const errEl = document.getElementById('login-error');
+async function login(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-password').value;
+  const errEl=document.getElementById('login-error');
   errEl.classList.remove('show');
-
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { errEl.textContent = error.message; errEl.classList.add('show'); return; }
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){errEl.textContent=error.message;errEl.classList.add('show');return;}
   closeModal('login');
 }
-
-async function register() {
-  const username = document.getElementById('reg-username').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass = document.getElementById('reg-password').value;
-  const errEl = document.getElementById('register-error');
+async function register(){
+  const username=document.getElementById('reg-username').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-password').value;
+  const errEl=document.getElementById('register-error');
   errEl.classList.remove('show');
-
-  if (!username || username.length < 2) { errEl.textContent = 'Username must be at least 2 characters.'; errEl.classList.add('show'); return; }
-
-  const { data, error } = await sb.auth.signUp({ email, password: pass });
-  if (error) { errEl.textContent = error.message; errEl.classList.add('show'); return; }
-
-  // Create player record
-  await sb.from('players').insert({ email, username, id: data.user?.id || undefined });
+  if(!username||username.length<2){errEl.textContent='Username must be at least 2 characters.';errEl.classList.add('show');return;}
+  const {data,error}=await sb.auth.signUp({email,password:pass});
+  if(error){errEl.textContent=error.message;errEl.classList.add('show');return;}
+  await sb.from('players').insert({email,username,id:data.user?.id||undefined});
   closeModal('register');
-  toast('Account created! Welcome to GEOPOLITICA.', 'success');
+  toast('Account created! Welcome to GEOPOLITICA.','success');
 }
-
-async function logout() {
-  await sb.auth.signOut();
-}
+async function logout(){await sb.auth.signOut();}
 
 // ── SCREENS ───────────────────────────────────────────────────────────────────
-function showLanding() {
-  document.getElementById('screen-landing').classList.add('active');
-  document.getElementById('screen-game').classList.remove('active');
-}
-
-function showGame() {
+function showLanding(){document.getElementById('screen-landing').classList.add('active');document.getElementById('screen-game').classList.remove('active');}
+function showGame(){
   document.getElementById('screen-landing').classList.remove('active');
   document.getElementById('screen-game').classList.add('active');
-  document.getElementById('nav-username').textContent = currentPlayer?.username || currentUser?.email?.split('@')[0] || '—';
+  document.getElementById('nav-username').textContent=currentPlayer?.username||currentUser?.email?.split('@')[0]||'—';
   loadWorldTab();
   loadNewsTab();
-  if (myCountry) renderDashboard();
+  if(myCountry) renderDashboard();
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  event.target.classList.add('active');
-
-  if (name === 'news') loadNewsTab();
-  if (name === 'world') loadWorldTab();
-  if (name === 'dashboard') { if (myCountry) renderDashboard(); }
-  if (name === 'diplomacy') renderDiplomacy();
-  if (name === 'military') renderMilitary();
-  if (name === 'economy') renderEconomy();
+function switchTab(name,el){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  if(name==='news') loadNewsTab();
+  if(name==='world') loadWorldTab();
+  if(name==='dashboard'&&myCountry) renderDashboard();
+  if(name==='diplomacy') renderDiplomacy();
+  if(name==='military') renderMilitary();
+  if(name==='economy') renderEconomy();
 }
 
-// ── WORLD TAB ─────────────────────────────────────────────────────────────────
-async function loadWorldTab() {
-  const { data: countries } = await sb.from('countries').select('*').order('gdp', { ascending: false });
-  allCountries = countries || [];
+// ── WORLD MAP ─────────────────────────────────────────────────────────────────
+async function loadWorldTab(){
+  const {data:countries}=await sb.from('countries').select('*').order('gdp',{ascending:false});
+  allCountries=countries||[];
+  renderMap();
+  renderDominance();
+}
 
-  // Dominance leaderboard (top 8)
-  const top = [...allCountries].sort((a, b) => calcDominance(b, allCountries) - calcDominance(a, allCountries)).slice(0, 8);
-  const domList = document.getElementById('dominance-list');
-  domList.innerHTML = top.map(c => {
-    const pct = calcDominance(c, allCountries);
-    return `<div class="dominance-entry">
-      <span class="dominance-entry-flag">${c.flag}</span>
-      <span class="dominance-entry-name">${c.name}</span>
-      <div class="dominance-entry-bar"><div class="dominance-entry-fill" style="width:${Math.min(pct/75*100,100)}%"></div></div>
-      <span class="dominance-entry-pct">${pct.toFixed(1)}%</span>
-    </div>`;
+function getCountryColor(c){
+  if(mapMode==='unique') return COUNTRY_COLORS[c.id]||'#4A6B8A';
+  if(mapMode==='regime'){
+    const m={democracy:'#2980B9',communist:'#C0392B',authoritarian:'#F39C12',dictatorship:'#7F8C8D',theocracy:'#8E44AD',monarchy:'#C9A84C'};
+    return m[c.regime]||'#4A6B8A';
+  }
+  if(mapMode==='dominance'){
+    const d=calcDominance(c,allCountries);
+    const t=Math.min(d/20,1);
+    const r=Math.round(74+t*(192-74));
+    const g=Math.round(144+t*(57-144));
+    const b=Math.round(226+t*(43-226));
+    return `rgb(${r},${g},${b})`;
+  }
+  if(mapMode==='relations'&&myCountry){
+    if(c.id===myCountry.id) return '#C9A84C';
+    // would need relations data - default neutral
+    return '#4A6B8A';
+  }
+  return COUNTRY_COLORS[c.id]||'#4A6B8A';
+}
+
+function renderMap(){
+  const wrap=document.getElementById('map-svg-wrap');
+  // Build a clean SVG world map using simplified country paths
+  // We use a well-known free SVG world map approach
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    .then(r=>r.json())
+    .then(world=>{ buildTopoMap(world,wrap); })
+    .catch(()=>{ wrap.innerHTML='<div style="padding:2rem;text-align:center;color:var(--text-dim);font-family:var(--mono);font-size:0.7rem">Map data unavailable. Using country grid view.</div>'; renderCountryGrid(); });
+}
+
+function buildTopoMap(world,wrap){
+  // Use topojson via CDN
+  const script=document.createElement('script');
+  script.src='https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
+  script.onload=()=>{
+    const d3script=document.createElement('script');
+    d3script.src='https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js';
+    d3script.onload=()=>{ drawD3Map(world,wrap); };
+    document.head.appendChild(d3script);
+  };
+  document.head.appendChild(script);
+}
+
+function drawD3Map(world,wrap){
+  wrap.innerHTML='';
+  const W=wrap.clientWidth||900, H=520;
+  const svg=d3.select(wrap).append('svg').attr('width',W).attr('height',H).style('background','#0a1628');
+
+  // Ocean background
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#0a1628');
+
+  const projection=d3.geoNaturalEarth1().scale(W/6.5).translate([W/2,H/2]);
+  const path=d3.geoPath().projection(projection);
+  const countries=topojson.feature(world,world.objects.countries);
+  const borders=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
+
+  // Graticule
+  const graticule=d3.geoGraticule();
+  svg.append('path').datum(graticule()).attr('d',path).attr('fill','none').attr('stroke','rgba(201,168,76,0.06)').attr('stroke-width',0.5);
+
+  // Countries
+  const tooltip=document.getElementById('map-tooltip');
+  const container=document.getElementById('map-container');
+
+  svg.selectAll('.country')
+    .data(countries.features)
+    .enter().append('path')
+    .attr('class','country')
+    .attr('d',path)
+    .attr('fill',d=>{
+      const iso2=getIso2FromNumeric(d.id);
+      const iso3=iso2?COUNTRY_ISO[iso2]:null;
+      const c=iso3?allCountries.find(x=>x.id===iso3):null;
+      if(c) return getCountryColor(c);
+      return '#1a2535';
+    })
+    .attr('stroke','#0a1628')
+    .attr('stroke-width',0.5)
+    .style('cursor','pointer')
+    .on('mouseover',function(event,d){
+      const iso2=getIso2FromNumeric(d.id);
+      const iso3=iso2?COUNTRY_ISO[iso2]:null;
+      const c=iso3?allCountries.find(x=>x.id===iso3):null;
+      d3.select(this).attr('stroke','#C9A84C').attr('stroke-width',1.5).attr('fill-opacity',0.85);
+      if(c){
+        const rect=container.getBoundingClientRect();
+        const tx=Math.min(event.clientX-rect.left+10,W-200);
+        const ty=Math.min(event.clientY-rect.top+10,H-120);
+        tooltip.style.left=tx+'px'; tooltip.style.top=ty+'px';
+        tooltip.innerHTML=`<div class="tooltip-flag">${c.flag}</div><div class="tooltip-name">${c.name}</div><div class="tooltip-stat">GDP: $${(c.gdp/1000).toFixed(1)}T</div><div class="tooltip-stat">Army: ${c.army}k · Approval: ${c.approval}%</div><div class="tooltip-stat regime-${c.regime}" style="margin-top:0.3rem">${c.regime}</div>`;
+        tooltip.classList.add('show');
+      }
+    })
+    .on('mousemove',function(event,d){
+      const rect=container.getBoundingClientRect();
+      const tx=Math.min(event.clientX-rect.left+10,W-200);
+      const ty=Math.min(event.clientY-rect.top+10,H-120);
+      tooltip.style.left=tx+'px'; tooltip.style.top=ty+'px';
+    })
+    .on('mouseout',function(){
+      d3.select(this).attr('stroke','#0a1628').attr('stroke-width',0.5).attr('fill-opacity',1);
+      tooltip.classList.remove('show');
+    })
+    .on('click',function(event,d){
+      const iso2=getIso2FromNumeric(d.id);
+      const iso3=iso2?COUNTRY_ISO[iso2]:null;
+      if(iso3) openCountryModal(iso3);
+    });
+
+  // Borders
+  svg.append('path').datum(borders).attr('d',path).attr('fill','none').attr('stroke','#0a1628').attr('stroke-width',0.5);
+
+  // Pan & zoom
+  const zoom=d3.zoom().scaleExtent([0.8,8]).on('zoom',(event)=>{
+    svg.selectAll('.country,.graticule,path').attr('transform',event.transform);
+    mapScale=event.transform.k;
+  });
+  svg.call(zoom);
+  window._mapZoom=zoom; window._mapSvg=svg;
+
+  updateLegend();
+}
+
+// Numeric ISO 3166-1 → alpha-2 mapping (subset)
+const NUMERIC_TO_ALPHA2={
+  4:'af',8:'al',12:'dz',24:'ao',32:'ar',51:'am',36:'au',40:'at',31:'az',
+  50:'bd',112:'by',56:'be',204:'bj',64:'bt',68:'bo',70:'ba',72:'bw',76:'br',
+  100:'bg',854:'bf',108:'bi',116:'kh',120:'cm',124:'ca',140:'cf',148:'td',
+  152:'cl',156:'cn',170:'co',180:'cd',178:'cg',188:'cr',191:'hr',192:'cu',
+  196:'cy',203:'cz',208:'dk',262:'dj',214:'do',218:'ec',818:'eg',222:'sv',
+  226:'gq',232:'er',233:'ee',231:'et',246:'fi',250:'fr',266:'ga',270:'gm',
+  268:'ge',276:'de',288:'gh',300:'gr',320:'gt',324:'gn',328:'gy',332:'ht',
+  340:'hn',348:'hu',356:'in',360:'id',364:'ir',368:'ir',372:'ie',376:'il',
+  380:'it',388:'jm',392:'jp',400:'jo',398:'kz',404:'ke',408:'kp',410:'kr',
+  414:'kw',417:'kg',418:'la',428:'lv',422:'lb',426:'ls',430:'lr',434:'ly',
+  440:'lt',442:'lu',450:'mg',454:'mw',458:'my',466:'ml',478:'mr',484:'mx',
+  496:'mn',504:'ma',508:'mz',104:'mm',516:'na',524:'np',528:'nl',558:'ni',
+  562:'ne',566:'ng',578:'no',512:'om',586:'pk',591:'pa',598:'pg',600:'py',
+  604:'pe',608:'ph',616:'pl',620:'pt',634:'qa',642:'ro',643:'ru',646:'rw',
+  682:'sa',686:'sn',694:'sl',703:'sk',705:'si',706:'so',710:'za',728:'ss',
+  724:'es',144:'lk',729:'sd',740:'sr',748:'sz',752:'se',756:'ch',760:'sy',
+  762:'tj',834:'tz',764:'th',626:'tl',768:'tg',780:'tt',788:'tn',792:'tr',
+  795:'tm',800:'ug',804:'ua',784:'ae',826:'gb',840:'us',858:'uy',860:'uz',
+  862:'ve',704:'vn',887:'ye',894:'zm',716:'zw',620:'pt',040:'at',372:'ie',
+  300:'gr',36:'au',554:'nz',242:'fj',
+};
+
+function getIso2FromNumeric(numId){
+  return NUMERIC_TO_ALPHA2[parseInt(numId)]||null;
+}
+
+function setMapMode(mode,el){
+  mapMode=mode;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  // Recolor
+  if(window._mapSvg){
+    window._mapSvg.selectAll('.country').attr('fill',d=>{
+      const iso2=getIso2FromNumeric(d.id);
+      const iso3=iso2?COUNTRY_ISO[iso2]:null;
+      const c=iso3?allCountries.find(x=>x.id===iso3):null;
+      if(c) return getCountryColor(c);
+      return '#1a2535';
+    });
+  }
+  updateLegend();
+}
+
+function updateLegend(){
+  const el=document.getElementById('map-legend');
+  if(mapMode==='regime'){
+    el.innerHTML=`<div style="margin-bottom:0.4rem;color:var(--gold);letter-spacing:0.15em">REGIME</div>`+
+      [['#2980B9','Democracy'],['#C0392B','Communist'],['#F39C12','Authoritarian'],['#7F8C8D','Dictatorship'],['#8E44AD','Theocracy'],['#C9A84C','Monarchy']]
+      .map(([c,l])=>`<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${l}</div>`).join('');
+  } else if(mapMode==='dominance'){
+    el.innerHTML=`<div style="margin-bottom:0.4rem;color:var(--gold);letter-spacing:0.15em">POWER</div><div class="legend-item"><div class="legend-dot" style="background:#4A90E2"></div>Weak</div><div class="legend-item"><div class="legend-dot" style="background:#C0392B"></div>Dominant</div>`;
+  } else {
+    el.innerHTML=`<div style="color:var(--gold);letter-spacing:0.15em">CLICK A COUNTRY</div><div style="margin-top:0.3rem;opacity:0.6">to view stats & join government</div>`;
+  }
+}
+
+function mapZoom(factor){
+  if(window._mapSvg&&window._mapZoom){
+    window._mapSvg.transition().duration(300).call(window._mapZoom.scaleBy,factor);
+  }
+}
+function mapReset(){
+  if(window._mapSvg&&window._mapZoom){
+    window._mapSvg.transition().duration(400).call(window._mapZoom.transform,d3.zoomIdentity);
+  }
+}
+
+function renderCountryGrid(){
+  // Fallback grid if map fails
+  const wrap=document.getElementById('map-svg-wrap');
+  wrap.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.75rem;padding:1rem;max-height:520px;overflow-y:auto">`+
+    allCountries.map(c=>`<div onclick="openCountryModal('${c.id}')" style="background:${COUNTRY_COLORS[c.id]||'#2a3a5c'}22;border:1px solid ${COUNTRY_COLORS[c.id]||'#2a3a5c'}66;padding:0.75rem;cursor:pointer;transition:all 0.2s" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+      <div style="font-size:1.5rem">${c.flag}</div>
+      <div style="font-family:'Cinzel',serif;font-size:0.75rem;color:var(--text);margin-top:0.3rem">${c.name}</div>
+      <div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);margin-top:0.2rem">$${(c.gdp/1000).toFixed(1)}T GDP</div>
+    </div>`).join('')+`</div>`;
+}
+
+// ── DOMINANCE ─────────────────────────────────────────────────────────────────
+function renderDominance(){
+  const top=[...allCountries].sort((a,b)=>calcDominance(b,allCountries)-calcDominance(a,allCountries)).slice(0,8);
+  document.getElementById('dominance-list').innerHTML=top.map(c=>{
+    const pct=calcDominance(c,allCountries);
+    return `<div class="dominance-entry"><span class="dominance-entry-flag">${c.flag}</span><span class="dominance-entry-name">${c.name}</span><div class="dominance-entry-bar"><div class="dominance-entry-fill" style="width:${Math.min(pct/75*100,100)}%"></div></div><span class="dominance-entry-pct">${pct.toFixed(1)}%</span></div>`;
   }).join('');
-
-  // Countries grid
-  const grid = document.getElementById('countries-grid');
-  grid.innerHTML = allCountries.map(c => `
-    <div class="country-card" onclick="openCountryModal('${c.id}')">
-      <span class="country-flag">${c.flag}</span>
-      <div class="country-name">${c.name}</div>
-      <div class="country-meta">${c.capital} · ${c.continent}</div>
-      <div class="country-meta">GDP: $${(c.gdp/1000).toFixed(1)}T</div>
-      <span class="country-regime regime-${c.regime}">${c.regime}</span>
-    </div>
-  `).join('');
 }
 
-function calcDominance(country, all) {
-  const totalGDP = all.reduce((s, c) => s + c.gdp, 0);
-  const totalMil = all.reduce((s, c) => s + c.army + c.navy + c.air_force, 0);
-  const gdpShare = (country.gdp / totalGDP) * 35;
-  const milPower = ((country.army + country.navy + country.air_force) / totalMil) * 25;
-  const dipScore = (country.approval / 100) * 25;
-  const terr = 15 / all.length;
-  return gdpShare + milPower + dipScore + terr;
+function calcDominance(country,all){
+  const totalGDP=all.reduce((s,c)=>s+c.gdp,0);
+  const totalMil=all.reduce((s,c)=>s+c.army+c.navy+c.air_force,0);
+  return (country.gdp/totalGDP)*35+((country.army+country.navy+country.air_force)/totalMil)*25+(country.approval/100)*25+(15/all.length);
 }
 
 // ── COUNTRY MODAL ─────────────────────────────────────────────────────────────
-async function openCountryModal(countryId) {
-  const c = allCountries.find(x => x.id === countryId);
-  if (!c) return;
-
-  const { data: roles } = await sb.from('player_roles')
-    .select('*, players(username)')
-    .eq('country_id', countryId);
-
-  const filledRoles = roles || [];
-  const allRoles = ['head_of_state', 'head_of_government', 'defense', 'economy', 'foreign_affairs', 'intelligence'];
-  const roleLabels = { head_of_state: 'Head of State', head_of_government: 'Head of Government', defense: 'Minister of Defense', economy: 'Minister of Economy', foreign_affairs: 'Minister of Foreign Affairs', intelligence: 'Minister of Intelligence' };
-
-  const alreadyInCountry = myRole?.country_id === countryId;
-  const alreadyInAny = !!myRole;
-
-  const roleRows = allRoles.map(role => {
-    const filled = filledRoles.find(r => r.role === role);
-    const isMe = filled?.player_id === currentPlayer?.id;
-    const canJoin = !alreadyInAny && !filled && currentPlayer;
-    return `<div class="stat-row">
-      <span class="stat-label">${roleLabels[role]}</span>
-      <span style="display:flex;align-items:center;gap:0.5rem">
-        ${filled ? `<span style="font-size:0.85rem;color:var(--text)">${filled.players?.username || 'Player'}${isMe ? ' (you)' : ''}</span>` : `<span style="color:var(--text-dim);font-size:0.8rem;font-style:italic">Vacant</span>`}
-        ${canJoin ? `<button class="btn" style="padding:0.2rem 0.6rem;font-size:0.6rem" onclick="joinRole('${countryId}','${role}')">Claim</button>` : ''}
-      </span>
-    </div>`;
+async function openCountryModal(countryId){
+  const c=allCountries.find(x=>x.id===countryId);
+  if(!c) return;
+  const {data:roles}=await sb.from('player_roles').select('*,players(username)').eq('country_id',countryId);
+  const filledRoles=roles||[];
+  const allRoles=['head_of_state','head_of_government','defense','economy','foreign_affairs','intelligence'];
+  const roleLabels={head_of_state:'Head of State',head_of_government:'Head of Government',defense:'Minister of Defense',economy:'Minister of Economy',foreign_affairs:'Minister of Foreign Affairs',intelligence:'Minister of Intelligence'};
+  const alreadyInAny=!!myRole;
+  const roleRows=allRoles.map(role=>{
+    const filled=filledRoles.find(r=>r.role===role);
+    const isMe=filled?.player_id===currentPlayer?.id;
+    const canJoin=!alreadyInAny&&!filled&&currentPlayer;
+    return `<div class="stat-row"><span class="stat-label">${roleLabels[role]}</span><span style="display:flex;align-items:center;gap:0.5rem">${filled?`<span style="font-size:0.85rem;color:var(--text)">${filled.players?.username||'Player'}${isMe?' (you)':''}</span>`:`<span style="color:var(--text-dim);font-size:0.8rem;font-style:italic">Vacant</span>`}${canJoin?`<button class="btn" style="padding:0.2rem 0.6rem;font-size:0.6rem" onclick="joinRole('${countryId}','${role}')">Claim</button>`:''}</span></div>`;
   }).join('');
-
-  document.getElementById('country-modal-content').innerHTML = `
+  document.getElementById('country-modal-content').innerHTML=`
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
       <span style="font-size:3rem">${c.flag}</span>
       <div>
@@ -1029,481 +803,242 @@ async function openCountryModal(countryId) {
       </div>
     </div>
     <div class="grid-2" style="gap:1rem;margin-bottom:1.5rem">
-      <div>
-        ${statRow('GDP', '$' + (c.gdp/1000).toFixed(1) + 'T')}
-        ${statRow('Army', c.army.toLocaleString() + 'k troops')}
-        ${statRow('Nuclear', c.nuclear_weapons > 0 ? '☢️ ' + c.nuclear_weapons : 'None')}
-      </div>
-      <div>
-        ${statRow('Approval', c.approval + '%', c.approval > 50 ? 'good' : c.approval > 30 ? 'warn' : 'bad')}
-        ${statRow('Stability', c.stability + '%', c.stability > 60 ? 'good' : c.stability > 35 ? 'warn' : 'bad')}
-        ${statRow('Corruption', c.corruption + '%', c.corruption < 30 ? 'good' : c.corruption < 60 ? 'warn' : 'bad')}
-      </div>
+      <div>${statRow('GDP','$'+(c.gdp/1000).toFixed(1)+'T')}${statRow('Army',c.army.toLocaleString()+'k')}${statRow('Nuclear',c.nuclear_weapons>0?'☢️ '+c.nuclear_weapons:'None')}</div>
+      <div>${statRow('Approval',c.approval+'%',c.approval>50?'good':c.approval>30?'warn':'bad')}${statRow('Stability',c.stability+'%',c.stability>60?'good':c.stability>35?'warn':'bad')}${statRow('Corruption',c.corruption+'%',c.corruption<30?'good':c.corruption<60?'warn':'bad')}</div>
     </div>
     <div style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:0.75rem;text-transform:uppercase">Government Positions</div>
     ${roleRows}
-    ${!currentPlayer ? '<p style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);text-align:center;font-style:italic">Sign in to claim a government role</p>' : ''}
+    ${!currentPlayer?'<p style="margin-top:1rem;font-size:0.85rem;color:var(--text-dim);text-align:center;font-style:italic">Sign in to claim a government role</p>':''}
   `;
   openModal('country');
 }
 
-function statRow(label, value, cls = '') {
+function statRow(label,value,cls=''){
   return `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-value ${cls}">${value}</span></div>`;
 }
 
-async function joinRole(countryId, role) {
-  if (!currentPlayer) return;
-  const { error } = await sb.from('player_roles').insert({ player_id: currentPlayer.id, country_id: countryId, role });
-  if (error) { toast('Could not claim role: ' + error.message, 'error'); return; }
-
-  // Add news
-  const c = allCountries.find(x => x.id === countryId);
-  const roleLabel = { head_of_state: 'Head of State', head_of_government: 'Head of Government', defense: 'Minister of Defense', economy: 'Minister of Economy', foreign_affairs: 'Minister of Foreign Affairs', intelligence: 'Minister of Intelligence' }[role];
-  await sb.from('news').insert({ headline: `${currentPlayer.username} has been appointed ${roleLabel} of ${c?.name}`, category: 'general', country_id: countryId });
-
+async function joinRole(countryId,role){
+  if(!currentPlayer) return;
+  const {error}=await sb.from('player_roles').insert({player_id:currentPlayer.id,country_id:countryId,role});
+  if(error){toast('Could not claim role: '+error.message,'error');return;}
+  const c=allCountries.find(x=>x.id===countryId);
+  const roleLabel={head_of_state:'Head of State',head_of_government:'Head of Government',defense:'Minister of Defense',economy:'Minister of Economy',foreign_affairs:'Minister of Foreign Affairs',intelligence:'Minister of Intelligence'}[role];
+  await sb.from('news').insert({headline:`${currentPlayer.username} has been appointed ${roleLabel} of ${c?.name}`,category:'general',country_id:countryId});
   await loadPlayer();
   closeModal('country');
-  toast('You are now ' + roleLabel + ' of ' + c?.name, 'success');
+  toast('You are now '+roleLabel+' of '+c?.name,'success');
   renderDashboard();
   loadWorldTab();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
-function renderDashboard() {
-  if (!myCountry) return;
-  const c = myCountry;
-  const roleLabels = { head_of_state: 'Head of State', head_of_government: 'Head of Government', defense: 'Minister of Defense', economy: 'Minister of Economy', foreign_affairs: 'Minister of Foreign Affairs', intelligence: 'Minister of Intelligence' };
-
-  document.getElementById('dashboard-content').innerHTML = `
+function renderDashboard(){
+  if(!myCountry) return;
+  const c=myCountry;
+  const roleLabels={head_of_state:'Head of State',head_of_government:'Head of Government',defense:'Minister of Defense',economy:'Minister of Economy',foreign_affairs:'Minister of Foreign Affairs',intelligence:'Minister of Intelligence'};
+  document.getElementById('dashboard-content').innerHTML=`
     <div class="dashboard-hero">
       <span class="dashboard-flag">${c.flag}</span>
       <div>
         <div class="dashboard-country-name">${c.name}</div>
-        <div class="dashboard-role">${roleLabels[myRole.role] || myRole.role}</div>
-        <div class="dashboard-capital">🏛 ${c.capital}</div>
+        <div class="dashboard-role">${roleLabels[myRole.role]||myRole.role}</div>
+        <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);letter-spacing:0.15em;margin-top:0.25rem">🏛 ${c.capital}</div>
       </div>
       <div style="margin-left:auto;text-align:right">
-        <div class="big-number">${calcDominance(c, allCountries).toFixed(1)}%</div>
+        <div class="big-number">${calcDominance(c,allCountries).toFixed(1)}%</div>
         <div class="big-number-label">Global Dominance</div>
       </div>
     </div>
-
     <div class="grid-4" style="margin-bottom:2rem">
-      <div class="card">
-        <div class="card-title">Economy</div>
-        <div class="big-number">$${(c.gdp/1000).toFixed(1)}T</div>
-        <div class="big-number-label">GDP</div>
-        <hr class="divider">
-        ${progressBar('Treasury', c.treasury, 10000, 'green')}
-        ${progressBar('Tax Revenue', c.tax_rate, 100)}
-      </div>
-      <div class="card">
-        <div class="card-title">Military</div>
-        <div class="big-number">${(c.army + c.navy + c.air_force).toLocaleString()}k</div>
-        <div class="big-number-label">Total Forces</div>
-        <hr class="divider">
-        ${progressBar('Readiness', c.military_readiness, 100, c.military_readiness > 60 ? 'green' : 'red')}
-        ${progressBar('Morale', c.military_morale, 100, c.military_morale > 60 ? 'green' : 'red')}
-      </div>
-      <div class="card">
-        <div class="card-title">Domestic</div>
-        <div class="big-number">${c.approval}%</div>
-        <div class="big-number-label">Public Approval</div>
-        <hr class="divider">
-        ${progressBar('Stability', c.stability, 100, c.stability > 50 ? 'green' : 'red')}
-        ${progressBar('Civil Liberties', c.civil_liberties, 100)}
-      </div>
-      <div class="card">
-        <div class="card-title">Regime</div>
-        <div style="margin:0.5rem 0"><span class="country-regime regime-${c.regime}" style="font-size:0.7rem">${c.regime}</span></div>
-        <hr class="divider">
-        ${statRow('Corruption', c.corruption + '%', c.corruption < 30 ? 'good' : c.corruption < 60 ? 'warn' : 'bad')}
-        ${statRow('Nuclear', c.nuclear_weapons > 0 ? '☢️ ' + c.nuclear_weapons : 'None')}
-      </div>
+      <div class="card"><div class="card-title">Economy</div><div class="big-number ${c.treasury<100?'bad':''}">$${(c.gdp/1000).toFixed(1)}T</div><div class="big-number-label">GDP</div><hr class="divider">${progressBar('Treasury',c.treasury,10000,'green')}${progressBar('Tax Rate',c.tax_rate,100)}</div>
+      <div class="card"><div class="card-title">Military</div><div class="big-number">${(c.army+c.navy+c.air_force).toLocaleString()}k</div><div class="big-number-label">Total Forces</div><hr class="divider">${progressBar('Readiness',c.military_readiness,100,c.military_readiness>60?'green':'red')}${progressBar('Morale',c.military_morale,100,c.military_morale>60?'green':'red')}</div>
+      <div class="card"><div class="card-title">Domestic</div><div class="big-number ${c.approval<30?'bad':''}">${c.approval}%</div><div class="big-number-label">Public Approval</div><hr class="divider">${progressBar('Stability',c.stability,100,c.stability>50?'green':'red')}${progressBar('Civil Liberties',c.civil_liberties,100)}</div>
+      <div class="card"><div class="card-title">Regime</div><div style="margin:0.5rem 0"><span class="country-regime regime-${c.regime}" style="font-size:0.7rem">${c.regime}</span></div><hr class="divider">${statRow('Corruption',c.corruption+'%',c.corruption<30?'good':c.corruption<60?'warn':'bad')}${statRow('Nuclear',c.nuclear_weapons>0?'☢️ '+c.nuclear_weapons:'None')}</div>
     </div>
-
-    <div class="section-header">
-      <div class="section-title">Available Actions</div>
-      <div class="section-sub">Actions available based on your role: ${roleLabels[myRole.role]}</div>
-    </div>
-    <div class="action-grid">
-      ${renderActions()}
-    </div>
+    <div class="section-header"><div class="section-title">Available Actions</div><div class="section-sub">Actions based on your role: ${roleLabels[myRole.role]}</div></div>
+    <div class="action-grid">${renderActions()}</div>
   `;
 }
 
-function progressBar(label, value, max, color = '') {
-  const pct = Math.min((value / max) * 100, 100);
-  return `<div class="progress-wrap">
-    <div class="progress-label"><span>${label}</span><span>${value}${max === 100 ? '%' : ''}</span></div>
-    <div class="progress-bar"><div class="progress-fill ${color}" style="width:${pct}%"></div></div>
-  </div>`;
+function progressBar(label,value,max,color=''){
+  const pct=Math.min((value/max)*100,100);
+  return `<div class="progress-wrap"><div class="progress-label"><span>${label}</span><span>${value}${max===100?'%':''}</span></div><div class="progress-bar"><div class="progress-fill ${color}" style="width:${pct}%"></div></div></div>`;
 }
 
-function renderActions() {
-  const role = myRole?.role;
-  const actions = [];
-
-  if (['head_of_state', 'head_of_government', 'foreign_affairs'].includes(role)) {
-    actions.push({ icon: '🤝', name: 'Propose Alliance', desc: 'Invite another nation to form a formal military alliance.', cost: 'Diplomatic Capital', type: 'propose_alliance' });
-    actions.push({ icon: '📜', name: 'Sign Non-Aggression Pact', desc: 'Agree with another nation not to attack each other.', cost: 'Diplomatic Capital', type: 'sign_nap' });
-    actions.push({ icon: '🚫', name: 'Issue Sanctions', desc: 'Apply economic pressure on a hostile nation.', cost: '200 Treasury', type: 'issue_sanctions' });
-    actions.push({ icon: '📢', name: 'Declare War', desc: 'Enter into open armed conflict with another nation.', cost: 'Approval -15', type: 'declare_war' });
+function renderActions(){
+  const role=myRole?.role;
+  const actions=[];
+  if(['head_of_state','head_of_government','foreign_affairs'].includes(role)){
+    actions.push({icon:'🤝',name:'Propose Alliance',desc:'Invite another nation to form a formal military alliance.',cost:'Diplomatic Capital',type:'propose_alliance'});
+    actions.push({icon:'📜',name:'Non-Aggression Pact',desc:'Agree with another nation not to attack each other.',cost:'Diplomatic Capital',type:'sign_nap'});
+    actions.push({icon:'🚫',name:'Issue Sanctions',desc:'Apply economic pressure on a hostile nation.',cost:'200 Treasury',type:'issue_sanctions'});
+    actions.push({icon:'📢',name:'Declare War',desc:'Enter into open armed conflict with another nation.',cost:'Approval -15',type:'declare_war'});
   }
-  if (['head_of_state', 'economy'].includes(role)) {
-    actions.push({ icon: '📈', name: 'Adjust Tax Rate', desc: 'Raise or lower taxes to control revenue and approval.', cost: 'Approval impact', type: 'adjust_tax' });
-    actions.push({ icon: '💸', name: 'Send Foreign Aid', desc: 'Send treasury funds to another country for diplomatic gain.', cost: '500 Treasury', type: 'send_aid' });
-    actions.push({ icon: '🏭', name: 'Invest in Industry', desc: 'Boost GDP by investing in industrial capacity.', cost: '1000 Treasury', type: 'invest_industry' });
+  if(['head_of_state','economy'].includes(role)){
+    actions.push({icon:'📈',name:'Adjust Tax Rate',desc:'Raise or lower taxes to control revenue and approval.',cost:'Approval impact',type:'adjust_tax'});
+    actions.push({icon:'💸',name:'Send Foreign Aid',desc:'Send treasury funds to another country for diplomatic gain.',cost:'500 Treasury',type:'send_aid'});
+    actions.push({icon:'🏭',name:'Invest in Industry',desc:'Boost GDP by investing in industrial capacity.',cost:'1000 Treasury',type:'invest_industry'});
   }
-  if (['head_of_state', 'defense'].includes(role)) {
-    actions.push({ icon: '🪖', name: 'Recruit Troops', desc: 'Expand your army size.', cost: '300 Treasury', type: 'recruit_troops' });
-    actions.push({ icon: '✈️', name: 'Upgrade Air Force', desc: 'Purchase and train new aircraft squadrons.', cost: '500 Treasury', type: 'upgrade_airforce' });
-    actions.push({ icon: '🛡️', name: 'Run Military Drills', desc: 'Improve readiness and morale of your forces.', cost: '150 Treasury', type: 'military_drills' });
+  if(['head_of_state','defense'].includes(role)){
+    actions.push({icon:'🪖',name:'Recruit Troops',desc:'Expand your army size.',cost:'300 Treasury',type:'recruit_troops'});
+    actions.push({icon:'✈️',name:'Upgrade Air Force',desc:'Purchase and train new aircraft squadrons.',cost:'500 Treasury',type:'upgrade_airforce'});
+    actions.push({icon:'🛡️',name:'Military Drills',desc:'Improve readiness and morale of your forces.',cost:'150 Treasury',type:'military_drills'});
   }
-  if (role === 'intelligence') {
-    actions.push({ icon: '🕵️', name: 'Spy Mission', desc: 'Gather intelligence on a target country\'s military.', cost: '200 Treasury', type: 'spy_mission' });
-    actions.push({ icon: '📡', name: 'Counter-Intelligence', desc: 'Defend against espionage from rival nations.', cost: '150 Treasury', type: 'counter_intel' });
+  if(role==='intelligence'){
+    actions.push({icon:'🕵️',name:'Spy Mission',desc:'Gather intelligence on a target country\'s military.',cost:'200 Treasury',type:'spy_mission'});
+    actions.push({icon:'📡',name:'Counter-Intelligence',desc:'Defend against espionage from rival nations.',cost:'150 Treasury',type:'counter_intel'});
   }
-  if (role === 'head_of_state') {
-    actions.push({ icon: '🗳️', name: 'Call Election', desc: 'Hold early elections. Risky but can reset public approval.', cost: 'Stability -10', type: 'call_election' });
-    actions.push({ icon: '📻', name: 'Propaganda Campaign', desc: 'Run a state media campaign to boost approval.', cost: '400 Treasury', type: 'propaganda' });
+  if(role==='head_of_state'){
+    actions.push({icon:'📻',name:'Propaganda Campaign',desc:'Run a state media campaign to boost approval.',cost:'400 Treasury',type:'propaganda'});
+    actions.push({icon:'🗳️',name:'Call Election',desc:'Hold early elections. Risky but can reset public approval.',cost:'Stability -10',type:'call_election'});
   }
-
-  if (actions.length === 0) return '<div class="empty-state">No actions available for your role.</div>';
-  return actions.map(a => `
-    <button class="action-btn" onclick="triggerAction('${a.type}')">
-      <span class="action-btn-icon">${a.icon}</span>
-      <span class="action-btn-name">${a.name}</span>
-      <span class="action-btn-desc">${a.desc}</span>
-      <span class="action-btn-cost">${a.cost}</span>
-    </button>
-  `).join('');
+  if(actions.length===0) return '<div class="empty-state">No actions available for your role.</div>';
+  return actions.map(a=>`<button class="action-btn" onclick="triggerAction('${a.type}')"><span class="action-btn-icon">${a.icon}</span><span class="action-btn-name">${a.name}</span><span class="action-btn-desc">${a.desc}</span><span class="action-btn-cost">${a.cost}</span></button>`).join('');
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
-async function triggerAction(type) {
-  const c = myCountry;
-  const actionMap = {
-    propose_alliance: { label: 'Propose Alliance', field: 'Target Country', stat: null },
-    sign_nap: { label: 'Sign NAP', field: 'Target Country', stat: null },
-    issue_sanctions: { label: 'Issue Sanctions', field: 'Target Country', stat: null },
-    declare_war: { label: 'Declare War', field: 'Target Country', stat: null },
-    send_aid: { label: 'Send Foreign Aid', field: 'Target Country', stat: null },
-  };
-
-  const needsTarget = ['propose_alliance','sign_nap','issue_sanctions','declare_war','send_aid','spy_mission'].includes(type);
-  const countryOptions = allCountries.filter(x => x.id !== c.id).map(x => `<option value="${x.id}">${x.flag} ${x.name}</option>`).join('');
-
-  const labels = {
-    propose_alliance: 'Propose Alliance', sign_nap: 'Non-Aggression Pact', issue_sanctions: 'Issue Sanctions',
-    declare_war: '⚠️ Declare War', send_aid: 'Send Foreign Aid', invest_industry: 'Invest in Industry',
-    recruit_troops: 'Recruit Troops', upgrade_airforce: 'Upgrade Air Force', military_drills: 'Military Drills',
-    spy_mission: 'Spy Mission', counter_intel: 'Counter-Intelligence', call_election: 'Call Election',
-    propaganda: 'Propaganda Campaign', adjust_tax: 'Adjust Tax Rate'
-  };
-
-  let extraFields = '';
-  if (type === 'adjust_tax') {
-    extraFields = `<div class="form-group"><label>New Tax Rate (%)</label><input type="number" id="action-tax" min="5" max="60" value="${c.tax_rate}"></div>`;
-  }
-
-  document.getElementById('action-modal-content').innerHTML = `
-    <div class="modal-title">${labels[type] || type}</div>
-    ${needsTarget ? `<div class="form-group"><label>Target Nation</label><select id="action-target">${countryOptions}</select></div>` : ''}
+async function triggerAction(type){
+  const c=myCountry;
+  const needsTarget=['propose_alliance','sign_nap','issue_sanctions','declare_war','send_aid','spy_mission'].includes(type);
+  const countryOptions=allCountries.filter(x=>x.id!==c.id).map(x=>`<option value="${x.id}">${x.flag} ${x.name}</option>`).join('');
+  const labels={propose_alliance:'Propose Alliance',sign_nap:'Non-Aggression Pact',issue_sanctions:'Issue Sanctions',declare_war:'⚠️ Declare War',send_aid:'Send Foreign Aid',invest_industry:'Invest in Industry',recruit_troops:'Recruit Troops',upgrade_airforce:'Upgrade Air Force',military_drills:'Military Drills',spy_mission:'Spy Mission',counter_intel:'Counter-Intelligence',call_election:'Call Election',propaganda:'Propaganda Campaign',adjust_tax:'Adjust Tax Rate'};
+  let extraFields='';
+  if(type==='adjust_tax') extraFields=`<div class="form-group"><label>New Tax Rate (%)</label><input type="number" id="action-tax" min="5" max="60" value="${c.tax_rate}"></div>`;
+  document.getElementById('action-modal-content').innerHTML=`
+    <div class="modal-title">${labels[type]||type}</div>
+    ${needsTarget?`<div class="form-group"><label>Target Nation</label><select id="action-target">${countryOptions}</select></div>`:''}
     ${extraFields}
     <div class="form-group"><label>Message / Declaration (optional)</label><input type="text" id="action-msg" placeholder="Add a diplomatic note..."></div>
     <div style="display:flex;gap:0.75rem;margin-top:0.5rem">
-      <button class="btn ${type === 'declare_war' ? 'btn-danger' : 'btn-success'}" style="flex:1" onclick="executeAction('${type}')">Confirm</button>
+      <button class="btn ${type==='declare_war'?'btn-danger':'btn-success'}" style="flex:1" onclick="executeAction('${type}')">Confirm</button>
       <button class="btn btn-ghost" onclick="closeModal('action')">Cancel</button>
     </div>
   `;
   openModal('action');
 }
 
-async function executeAction(type) {
-  const targetId = document.getElementById('action-target')?.value;
-  const msg = document.getElementById('action-msg')?.value || '';
-  const c = myCountry;
-  const target = allCountries.find(x => x.id === targetId);
-
-  let newStats = {};
-  let newsHeadline = '';
-  let newsCategory = 'general';
-  let relationUpdate = null;
-
-  switch (type) {
-    case 'declare_war':
-      newStats = { approval: Math.max(0, c.approval - 15) };
-      newsHeadline = `${c.flag} ${c.name} has declared war on ${target?.flag} ${target?.name}!`;
-      newsCategory = 'war';
-      relationUpdate = { country_a: c.id, country_b: targetId, status: 'at_war', score: -80 };
-      break;
-    case 'propose_alliance':
-      newsHeadline = `${c.flag} ${c.name} has proposed a military alliance with ${target?.flag} ${target?.name}.`;
-      newsCategory = 'diplomacy';
-      relationUpdate = { country_a: c.id, country_b: targetId, status: 'ally', score: 70 };
-      break;
-    case 'sign_nap':
-      newsHeadline = `${c.flag} ${c.name} and ${target?.flag} ${target?.name} have signed a Non-Aggression Pact.`;
-      newsCategory = 'diplomacy';
-      relationUpdate = { country_a: c.id, country_b: targetId, status: 'pact', score: 40 };
-      break;
-    case 'issue_sanctions':
-      newStats = { treasury: Math.max(0, c.treasury - 200) };
-      newsHeadline = `${c.flag} ${c.name} has imposed economic sanctions on ${target?.flag} ${target?.name}.`;
-      newsCategory = 'economy';
-      relationUpdate = { country_a: c.id, country_b: targetId, status: 'sanctioned', score: -40 };
-      break;
-    case 'send_aid':
-      newStats = { treasury: Math.max(0, c.treasury - 500) };
-      newsHeadline = `${c.flag} ${c.name} has sent foreign aid to ${target?.flag} ${target?.name}.`;
-      newsCategory = 'diplomacy';
-      relationUpdate = { country_a: c.id, country_b: targetId, score: 25 };
-      break;
-    case 'invest_industry':
-      newStats = { treasury: Math.max(0, c.treasury - 1000), gdp: c.gdp + 150 };
-      newsHeadline = `${c.flag} ${c.name} announces major industrial investment program.`;
-      newsCategory = 'economy';
-      break;
-    case 'recruit_troops':
-      newStats = { treasury: Math.max(0, c.treasury - 300), army: c.army + 50 };
-      newsHeadline = `${c.flag} ${c.name} expands its military with new troop recruitment.`;
-      newsCategory = 'general';
-      break;
-    case 'upgrade_airforce':
-      newStats = { treasury: Math.max(0, c.treasury - 500), air_force: c.air_force + 30 };
-      newsHeadline = `${c.flag} ${c.name} upgrades its air force capabilities.`;
-      newsCategory = 'general';
-      break;
-    case 'military_drills':
-      newStats = { treasury: Math.max(0, c.treasury - 150), military_readiness: Math.min(100, c.military_readiness + 10), military_morale: Math.min(100, c.military_morale + 8) };
-      newsHeadline = `${c.flag} ${c.name} conducts large-scale military exercises.`;
-      break;
-    case 'propaganda':
-      newStats = { treasury: Math.max(0, c.treasury - 400), approval: Math.min(100, c.approval + 8), civil_liberties: Math.max(0, c.civil_liberties - 5) };
-      newsHeadline = `${c.flag} ${c.name} launches state propaganda campaign.`;
-      break;
-    case 'call_election':
-      newStats = { stability: Math.max(0, c.stability - 10) };
-      newsHeadline = `${c.flag} ${c.name} calls for early national elections.`;
-      break;
-    case 'adjust_tax':
-      const newTax = parseInt(document.getElementById('action-tax')?.value || c.tax_rate);
-      const taxDiff = newTax - c.tax_rate;
-      newStats = { tax_rate: newTax, approval: Math.max(0, Math.min(100, c.approval - taxDiff)) };
-      newsHeadline = `${c.flag} ${c.name} adjusts tax rate to ${newTax}%.`;
-      newsCategory = 'economy';
-      break;
-    case 'spy_mission':
-      newStats = { treasury: Math.max(0, c.treasury - 200) };
-      newsHeadline = `Intelligence operatives from ${c.flag} ${c.name} conduct covert operations.`;
-      break;
-    case 'counter_intel':
-      newStats = { treasury: Math.max(0, c.treasury - 150) };
-      newsHeadline = `${c.flag} ${c.name} strengthens counter-intelligence operations.`;
-      break;
+async function executeAction(type){
+  const targetId=document.getElementById('action-target')?.value;
+  const msg=document.getElementById('action-msg')?.value||'';
+  const c=myCountry;
+  const target=allCountries.find(x=>x.id===targetId);
+  let newStats={},newsHeadline='',newsCategory='general',relationUpdate=null;
+  switch(type){
+    case 'declare_war': newStats={approval:Math.max(0,c.approval-15)}; newsHeadline=`${c.flag} ${c.name} has declared war on ${target?.flag} ${target?.name}!`; newsCategory='war'; relationUpdate={status:'at_war',score:-80}; break;
+    case 'propose_alliance': newsHeadline=`${c.flag} ${c.name} has proposed a military alliance with ${target?.flag} ${target?.name}.`; newsCategory='diplomacy'; relationUpdate={status:'ally',score:70}; break;
+    case 'sign_nap': newsHeadline=`${c.flag} ${c.name} and ${target?.flag} ${target?.name} have signed a Non-Aggression Pact.`; newsCategory='diplomacy'; relationUpdate={status:'pact',score:40}; break;
+    case 'issue_sanctions': newStats={treasury:Math.max(0,c.treasury-200)}; newsHeadline=`${c.flag} ${c.name} has imposed economic sanctions on ${target?.flag} ${target?.name}.`; newsCategory='economy'; relationUpdate={status:'sanctioned',score:-40}; break;
+    case 'send_aid': newStats={treasury:Math.max(0,c.treasury-500)}; newsHeadline=`${c.flag} ${c.name} has sent foreign aid to ${target?.flag} ${target?.name}.`; newsCategory='diplomacy'; relationUpdate={score:25}; break;
+    case 'invest_industry': newStats={treasury:Math.max(0,c.treasury-1000),gdp:c.gdp+150}; newsHeadline=`${c.flag} ${c.name} announces major industrial investment program.`; newsCategory='economy'; break;
+    case 'recruit_troops': newStats={treasury:Math.max(0,c.treasury-300),army:c.army+50}; newsHeadline=`${c.flag} ${c.name} expands its military with new troop recruitment.`; break;
+    case 'upgrade_airforce': newStats={treasury:Math.max(0,c.treasury-500),air_force:c.air_force+30}; newsHeadline=`${c.flag} ${c.name} upgrades its air force capabilities.`; break;
+    case 'military_drills': newStats={treasury:Math.max(0,c.treasury-150),military_readiness:Math.min(100,c.military_readiness+10),military_morale:Math.min(100,c.military_morale+8)}; newsHeadline=`${c.flag} ${c.name} conducts large-scale military exercises.`; break;
+    case 'propaganda': newStats={treasury:Math.max(0,c.treasury-400),approval:Math.min(100,c.approval+8),civil_liberties:Math.max(0,c.civil_liberties-5)}; newsHeadline=`${c.flag} ${c.name} launches state propaganda campaign.`; break;
+    case 'call_election': newStats={stability:Math.max(0,c.stability-10)}; newsHeadline=`${c.flag} ${c.name} calls for early national elections.`; break;
+    case 'adjust_tax': const newTax=parseInt(document.getElementById('action-tax')?.value||c.tax_rate); newStats={tax_rate:newTax,approval:Math.max(0,Math.min(100,c.approval-(newTax-c.tax_rate)))}; newsHeadline=`${c.flag} ${c.name} adjusts tax rate to ${newTax}%.`; newsCategory='economy'; break;
+    case 'spy_mission': newStats={treasury:Math.max(0,c.treasury-200)}; newsHeadline=`Intelligence operatives from ${c.flag} ${c.name} conduct covert operations.`; break;
+    case 'counter_intel': newStats={treasury:Math.max(0,c.treasury-150)}; newsHeadline=`${c.flag} ${c.name} strengthens counter-intelligence operations.`; break;
   }
-
-  // Update country stats
-  if (Object.keys(newStats).length > 0) {
-    await sb.from('countries').update({ ...newStats, updated_at: new Date().toISOString() }).eq('id', c.id);
-    myCountry = { ...myCountry, ...newStats };
+  if(Object.keys(newStats).length>0){
+    await sb.from('countries').update({...newStats,updated_at:new Date().toISOString()}).eq('id',c.id);
+    myCountry={...myCountry,...newStats};
   }
-
-  // Update/insert relation
-  if (relationUpdate) {
-    const { data: existing } = await sb.from('relations')
-      .select('id').or(`and(country_a.eq.${c.id},country_b.eq.${targetId}),and(country_a.eq.${targetId},country_b.eq.${c.id})`).single();
-    if (existing) {
-      await sb.from('relations').update({ status: relationUpdate.status, score: relationUpdate.score, updated_at: new Date().toISOString() }).eq('id', existing.id);
-    } else {
-      await sb.from('relations').insert({ country_a: c.id, country_b: targetId, status: relationUpdate.status || 'neutral', score: relationUpdate.score || 0 });
-    }
+  if(relationUpdate&&targetId){
+    const {data:existing}=await sb.from('relations').select('id').or(`and(country_a.eq.${c.id},country_b.eq.${targetId}),and(country_a.eq.${targetId},country_b.eq.${c.id})`).single();
+    if(existing) await sb.from('relations').update({...relationUpdate,updated_at:new Date().toISOString()}).eq('id',existing.id);
+    else await sb.from('relations').insert({country_a:c.id,country_b:targetId,status:relationUpdate.status||'neutral',score:relationUpdate.score||0});
   }
-
-  // Log action
-  await sb.from('actions').insert({ player_id: currentPlayer.id, country_id: c.id, action_type: type, target_country: targetId || null, details: { msg } });
-
-  // Post news
-  const fullBody = msg ? `Official statement: "${msg}"` : null;
-  await sb.from('news').insert({ headline: newsHeadline, body: fullBody, country_id: c.id, category: newsCategory });
-
+  await sb.from('actions').insert({player_id:currentPlayer.id,country_id:c.id,action_type:type,target_country:targetId||null,details:{msg}});
+  await sb.from('news').insert({headline:newsHeadline,body:msg?`Official statement: "${msg}"`:null,country_id:c.id,category:newsCategory});
   closeModal('action');
-  toast(newsHeadline, 'success');
+  toast(newsHeadline,'success');
   renderDashboard();
   loadWorldTab();
 }
 
-// ── DIPLOMACY TAB ─────────────────────────────────────────────────────────────
-async function renderDiplomacy() {
-  if (!myCountry) { document.getElementById('diplomacy-content').innerHTML = '<div class="empty-state">Join a country to access diplomatic tools.</div>'; return; }
-  const c = myCountry;
-
-  const { data: rels } = await sb.from('relations')
-    .select('*')
-    .or(`country_a.eq.${c.id},country_b.eq.${c.id}`);
-
-  const relMap = {};
-  (rels || []).forEach(r => {
-    const otherId = r.country_a === c.id ? r.country_b : r.country_a;
-    relMap[otherId] = r;
-  });
-
-  const otherCountries = allCountries.filter(x => x.id !== c.id);
-
-  document.getElementById('diplomacy-content').innerHTML = `
+// ── DIPLOMACY ─────────────────────────────────────────────────────────────────
+async function renderDiplomacy(){
+  if(!myCountry){document.getElementById('diplomacy-content').innerHTML='<div class="empty-state">Join a country to access diplomatic tools.</div>';return;}
+  const c=myCountry;
+  const {data:rels}=await sb.from('relations').select('*').or(`country_a.eq.${c.id},country_b.eq.${c.id}`);
+  const relMap={};
+  (rels||[]).forEach(r=>{const otherId=r.country_a===c.id?r.country_b:r.country_a;relMap[otherId]=r;});
+  document.getElementById('diplomacy-content').innerHTML=`
     <div class="grid-2">
-      <div>
-        <div class="card-title" style="margin-bottom:1rem">Active Relations</div>
-        <div class="relations-list">
-          ${otherCountries.slice(0, 20).map(other => {
-            const rel = relMap[other.id] || { status: 'neutral', score: 0 };
-            const scoreColor = rel.score > 0 ? 'good' : rel.score < 0 ? 'bad' : '';
-            return `<div class="relation-item">
-              <span class="relation-flag">${other.flag}</span>
-              <span class="relation-name">${other.name}</span>
-              <span class="relation-status status-${rel.status}">${rel.status}</span>
-              <span class="relation-score ${scoreColor}">${rel.score > 0 ? '+' : ''}${rel.score}</span>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-      <div>
-        <div class="card-title" style="margin-bottom:1rem">Diplomatic Actions</div>
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <button class="action-btn" onclick="triggerAction('propose_alliance')"><span class="action-btn-icon">🤝</span><span class="action-btn-name">Propose Alliance</span><span class="action-btn-desc">Form a military alliance with another nation.</span></button>
-          <button class="action-btn" onclick="triggerAction('sign_nap')"><span class="action-btn-icon">📜</span><span class="action-btn-name">Non-Aggression Pact</span><span class="action-btn-desc">Agree to peaceful coexistence.</span></button>
-          <button class="action-btn" onclick="triggerAction('issue_sanctions')"><span class="action-btn-icon">🚫</span><span class="action-btn-name">Issue Sanctions</span><span class="action-btn-desc">Apply economic pressure.</span></button>
-          <button class="action-btn" onclick="triggerAction('send_aid')"><span class="action-btn-icon">💸</span><span class="action-btn-name">Send Foreign Aid</span><span class="action-btn-desc">Build goodwill with another nation.</span></button>
-          <button class="action-btn" onclick="triggerAction('declare_war')" style="border-color:rgba(192,57,43,0.4)"><span class="action-btn-icon">⚔️</span><span class="action-btn-name">Declare War</span><span class="action-btn-desc">Enter into open armed conflict.</span></button>
-        </div>
-      </div>
-    </div>
-  `;
+      <div><div class="card-title" style="margin-bottom:1rem">Active Relations</div><div class="relations-list">${allCountries.filter(x=>x.id!==c.id).slice(0,20).map(other=>{const rel=relMap[other.id]||{status:'neutral',score:0};return `<div class="relation-item"><span class="relation-flag">${other.flag}</span><span class="relation-name">${other.name}</span><span class="relation-status status-${rel.status}">${rel.status}</span><span class="relation-score ${rel.score>0?'good':rel.score<0?'bad':''}">${rel.score>0?'+':''}${rel.score}</span></div>`;}).join('')}</div></div>
+      <div><div class="card-title" style="margin-bottom:1rem">Diplomatic Actions</div><div style="display:flex;flex-direction:column;gap:0.75rem">
+        <button class="action-btn" onclick="triggerAction('propose_alliance')"><span class="action-btn-icon">🤝</span><span class="action-btn-name">Propose Alliance</span><span class="action-btn-desc">Form a military alliance with another nation.</span></button>
+        <button class="action-btn" onclick="triggerAction('sign_nap')"><span class="action-btn-icon">📜</span><span class="action-btn-name">Non-Aggression Pact</span><span class="action-btn-desc">Agree to peaceful coexistence.</span></button>
+        <button class="action-btn" onclick="triggerAction('issue_sanctions')"><span class="action-btn-icon">🚫</span><span class="action-btn-name">Issue Sanctions</span><span class="action-btn-desc">Apply economic pressure.</span></button>
+        <button class="action-btn" onclick="triggerAction('send_aid')"><span class="action-btn-icon">💸</span><span class="action-btn-name">Send Foreign Aid</span><span class="action-btn-desc">Build goodwill with another nation.</span></button>
+        <button class="action-btn" onclick="triggerAction('declare_war')" style="border-color:rgba(192,57,43,0.4)"><span class="action-btn-icon">⚔️</span><span class="action-btn-name">Declare War</span><span class="action-btn-desc">Enter into open armed conflict.</span></button>
+      </div></div>
+    </div>`;
 }
 
-// ── MILITARY TAB ──────────────────────────────────────────────────────────────
-async function renderMilitary() {
-  if (!myCountry) { document.getElementById('military-content').innerHTML = '<div class="empty-state">Join a country to access military command.</div>'; return; }
-  const c = myCountry;
-
-  document.getElementById('military-content').innerHTML = `
+// ── MILITARY ──────────────────────────────────────────────────────────────────
+async function renderMilitary(){
+  if(!myCountry){document.getElementById('military-content').innerHTML='<div class="empty-state">Join a country to access military command.</div>';return;}
+  const c=myCountry;
+  document.getElementById('military-content').innerHTML=`
     <div class="grid-3" style="margin-bottom:2rem">
-      <div class="card">
-        <div class="card-title">Ground Forces</div>
-        <div class="big-number">${c.army.toLocaleString()}k</div>
-        <div class="big-number-label">Army Personnel</div>
-        <hr class="divider">
-        ${progressBar('Readiness', c.military_readiness, 100, c.military_readiness > 60 ? 'green' : 'red')}
-        ${progressBar('Morale', c.military_morale, 100, c.military_morale > 60 ? 'green' : 'red')}
-      </div>
-      <div class="card">
-        <div class="card-title">Naval Forces</div>
-        <div class="big-number">${c.navy.toLocaleString()}</div>
-        <div class="big-number-label">Naval Vessels</div>
-        <hr class="divider">
-        ${progressBar('Budget Allocation', c.military_budget, 30)}
-      </div>
-      <div class="card">
-        <div class="card-title">Air Power</div>
-        <div class="big-number">${c.air_force.toLocaleString()}</div>
-        <div class="big-number-label">Aircraft</div>
-        <hr class="divider">
-        ${c.nuclear_weapons > 0 ? `<div style="color:var(--red);font-family:var(--mono);font-size:0.7rem;margin-top:0.5rem">☢️ ${c.nuclear_weapons} Nuclear Warheads</div>` : '<div style="color:var(--text-dim);font-family:var(--mono);font-size:0.7rem;margin-top:0.5rem">No nuclear arsenal</div>'}
-      </div>
+      <div class="card"><div class="card-title">Ground Forces</div><div class="big-number">${c.army.toLocaleString()}k</div><div class="big-number-label">Army Personnel</div><hr class="divider">${progressBar('Readiness',c.military_readiness,100,c.military_readiness>60?'green':'red')}${progressBar('Morale',c.military_morale,100,c.military_morale>60?'green':'red')}</div>
+      <div class="card"><div class="card-title">Naval Forces</div><div class="big-number">${c.navy.toLocaleString()}</div><div class="big-number-label">Naval Vessels</div><hr class="divider">${progressBar('Budget',c.military_budget,30)}</div>
+      <div class="card"><div class="card-title">Air Power</div><div class="big-number">${c.air_force.toLocaleString()}</div><div class="big-number-label">Aircraft</div><hr class="divider">${c.nuclear_weapons>0?`<div style="color:var(--red);font-family:var(--mono);font-size:0.7rem;margin-top:0.5rem">☢️ ${c.nuclear_weapons} Nuclear Warheads</div>`:'<div style="color:var(--text-dim);font-family:var(--mono);font-size:0.7rem;margin-top:0.5rem">No nuclear arsenal</div>'}</div>
     </div>
     <div class="section-header"><div class="section-title">Military Operations</div></div>
     <div class="action-grid">
-      <button class="action-btn" onclick="triggerAction('recruit_troops')"><span class="action-btn-icon">🪖</span><span class="action-btn-name">Recruit Troops</span><span class="action-btn-desc">Expand army. Cost: 300 Treasury</span></button>
-      <button class="action-btn" onclick="triggerAction('upgrade_airforce')"><span class="action-btn-icon">✈️</span><span class="action-btn-name">Upgrade Air Force</span><span class="action-btn-desc">Add 30 aircraft. Cost: 500 Treasury</span></button>
-      <button class="action-btn" onclick="triggerAction('military_drills')"><span class="action-btn-icon">🛡️</span><span class="action-btn-name">Military Drills</span><span class="action-btn-desc">Boost readiness +10, morale +8. Cost: 150</span></button>
+      <button class="action-btn" onclick="triggerAction('recruit_troops')"><span class="action-btn-icon">🪖</span><span class="action-btn-name">Recruit Troops</span><span class="action-btn-desc">+50k army. Cost: 300 Treasury</span></button>
+      <button class="action-btn" onclick="triggerAction('upgrade_airforce')"><span class="action-btn-icon">✈️</span><span class="action-btn-name">Upgrade Air Force</span><span class="action-btn-desc">+30 aircraft. Cost: 500 Treasury</span></button>
+      <button class="action-btn" onclick="triggerAction('military_drills')"><span class="action-btn-icon">🛡️</span><span class="action-btn-name">Military Drills</span><span class="action-btn-desc">Readiness +10, Morale +8. Cost: 150</span></button>
       <button class="action-btn" onclick="triggerAction('declare_war')" style="border-color:rgba(192,57,43,0.4)"><span class="action-btn-icon">⚔️</span><span class="action-btn-name">Declare War</span><span class="action-btn-desc">Enter armed conflict with a nation.</span></button>
-    </div>
-  `;
-}
-
-// ── ECONOMY TAB ───────────────────────────────────────────────────────────────
-async function renderEconomy() {
-  if (!myCountry) { document.getElementById('economy-content').innerHTML = '<div class="empty-state">Join a country to access economic controls.</div>'; return; }
-  const c = myCountry;
-
-  document.getElementById('economy-content').innerHTML = `
-    <div class="grid-4" style="margin-bottom:2rem">
-      <div class="card">
-        <div class="card-title">GDP</div>
-        <div class="big-number">$${(c.gdp/1000).toFixed(1)}T</div>
-        <div class="big-number-label">Gross Domestic Product</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Treasury</div>
-        <div class="big-number ${c.treasury < 200 ? 'bad' : ''}">${c.treasury}B</div>
-        <div class="big-number-label">Available Funds</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Tax Rate</div>
-        <div class="big-number">${c.tax_rate}%</div>
-        <div class="big-number-label">Current Tax Rate</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Inflation</div>
-        <div class="big-number ${c.inflation > 8 ? 'bad' : 'good'}">${c.inflation}%</div>
-        <div class="big-number-label">Inflation Rate</div>
-      </div>
-    </div>
-    <div class="grid-2" style="margin-bottom:2rem">
-      <div class="card">
-        <div class="card-title">Economic Health</div>
-        ${progressBar('GDP Growth', 65, 100, 'green')}
-        ${progressBar('Trade Balance', 55, 100)}
-        ${progressBar('Employment', 100 - c.unemployment, 100, c.unemployment < 10 ? 'green' : 'red')}
-        ${progressBar('Inflation Control', Math.max(0, 100 - c.inflation * 5), 100, c.inflation < 5 ? 'green' : 'red')}
-      </div>
-      <div class="card">
-        <div class="card-title">Quick Actions</div>
-        <div style="display:flex;flex-direction:column;gap:0.5rem">
-          <button class="action-btn" onclick="triggerAction('adjust_tax')"><span class="action-btn-icon">📊</span><span class="action-btn-name">Adjust Tax Rate</span><span class="action-btn-desc">Change income taxes. Affects approval.</span></button>
-          <button class="action-btn" onclick="triggerAction('invest_industry')"><span class="action-btn-icon">🏭</span><span class="action-btn-name">Invest in Industry</span><span class="action-btn-desc">+150B GDP. Cost: 1000 Treasury</span></button>
-          <button class="action-btn" onclick="triggerAction('send_aid')"><span class="action-btn-icon">💸</span><span class="action-btn-name">Send Foreign Aid</span><span class="action-btn-desc">Boost diplomatic relations. Cost: 500</span></button>
-          <button class="action-btn" onclick="triggerAction('issue_sanctions')"><span class="action-btn-icon">🚫</span><span class="action-btn-name">Issue Sanctions</span><span class="action-btn-desc">Apply economic pressure. Cost: 200</span></button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// ── NEWS TAB ──────────────────────────────────────────────────────────────────
-async function loadNewsTab() {
-  const { data: news } = await sb.from('news').select('*, countries(name, flag)').order('created_at', { ascending: false }).limit(50);
-  const el = document.getElementById('news-list');
-  if (!news || news.length === 0) { el.innerHTML = '<div class="empty-state">No intelligence reports yet.</div>'; return; }
-
-  el.innerHTML = news.map(n => {
-    const time = new Date(n.created_at).toLocaleString();
-    return `<div class="news-item">
-      <div class="news-headline">${n.headline}</div>
-      ${n.body ? `<div class="news-body">${n.body}</div>` : ''}
-      <div class="news-meta"><span class="news-category cat-${n.category}">${n.category}</span>${time}${n.countries ? ` · ${n.countries.flag} ${n.countries.name}` : ''}</div>
     </div>`;
-  }).join('');
+}
+
+// ── ECONOMY ───────────────────────────────────────────────────────────────────
+async function renderEconomy(){
+  if(!myCountry){document.getElementById('economy-content').innerHTML='<div class="empty-state">Join a country to access economic controls.</div>';return;}
+  const c=myCountry;
+  document.getElementById('economy-content').innerHTML=`
+    <div class="grid-4" style="margin-bottom:2rem">
+      <div class="card"><div class="card-title">GDP</div><div class="big-number">$${(c.gdp/1000).toFixed(1)}T</div><div class="big-number-label">Gross Domestic Product</div></div>
+      <div class="card"><div class="card-title">Treasury</div><div class="big-number ${c.treasury<200?'bad':''}">${c.treasury}B</div><div class="big-number-label">Available Funds</div></div>
+      <div class="card"><div class="card-title">Tax Rate</div><div class="big-number">${c.tax_rate}%</div><div class="big-number-label">Current Tax Rate</div></div>
+      <div class="card"><div class="card-title">Inflation</div><div class="big-number ${c.inflation>8?'bad':'good'}">${c.inflation}%</div><div class="big-number-label">Inflation Rate</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Economic Health</div>${progressBar('GDP Growth',65,100,'green')}${progressBar('Trade Balance',55,100)}${progressBar('Employment',100-c.unemployment,100,c.unemployment<10?'green':'red')}${progressBar('Inflation Control',Math.max(0,100-c.inflation*5),100,c.inflation<5?'green':'red')}</div>
+      <div class="card"><div class="card-title">Economic Actions</div><div style="display:flex;flex-direction:column;gap:0.5rem">
+        <button class="action-btn" onclick="triggerAction('adjust_tax')"><span class="action-btn-icon">📊</span><span class="action-btn-name">Adjust Tax Rate</span><span class="action-btn-desc">Change income taxes. Affects approval.</span></button>
+        <button class="action-btn" onclick="triggerAction('invest_industry')"><span class="action-btn-icon">🏭</span><span class="action-btn-name">Invest in Industry</span><span class="action-btn-desc">+150B GDP. Cost: 1000 Treasury</span></button>
+        <button class="action-btn" onclick="triggerAction('send_aid')"><span class="action-btn-icon">💸</span><span class="action-btn-name">Send Foreign Aid</span><span class="action-btn-desc">Boost diplomatic relations. Cost: 500</span></button>
+        <button class="action-btn" onclick="triggerAction('issue_sanctions')"><span class="action-btn-icon">🚫</span><span class="action-btn-name">Issue Sanctions</span><span class="action-btn-desc">Apply economic pressure. Cost: 200</span></button>
+      </div></div>
+    </div>`;
+}
+
+// ── NEWS ──────────────────────────────────────────────────────────────────────
+async function loadNewsTab(){
+  const {data:news}=await sb.from('news').select('*,countries(name,flag)').order('created_at',{ascending:false}).limit(50);
+  const el=document.getElementById('news-list');
+  if(!news||news.length===0){el.innerHTML='<div class="empty-state">No intelligence reports yet.</div>';return;}
+  el.innerHTML=news.map(n=>`<div class="news-item"><div class="news-headline">${n.headline}</div>${n.body?`<div class="news-body">${n.body}</div>`:''}<div class="news-meta"><span class="news-category cat-${n.category}">${n.category}</span>${new Date(n.created_at).toLocaleString()}${n.countries?` · ${n.countries.flag} ${n.countries.name}`:''}</div></div>`).join('');
 }
 
 // ── MODALS ────────────────────────────────────────────────────────────────────
-function openModal(name) { document.getElementById('modal-' + name).classList.add('open'); }
-function closeModal(name) { document.getElementById('modal-' + name).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(el => {
-  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
-});
+function openModal(name){document.getElementById('modal-'+name).classList.add('open');}
+function closeModal(name){document.getElementById('modal-'+name).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
-function toast(msg, type = '') {
-  const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  el.textContent = msg;
+function toast(msg,type=''){
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  el.textContent=msg;
   document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+  setTimeout(()=>el.remove(),4000);
 }
 
-// ── START ─────────────────────────────────────────────────────────────────────
 init();
 </script>
 </body>
