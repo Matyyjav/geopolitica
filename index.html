@@ -257,6 +257,47 @@
   .divider { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
   .empty-state { padding:3rem; text-align:center; color:var(--text-dim); font-family:var(--mono); font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; }
   @media(max-width:600px){.main-content{padding:1rem}.nav{padding:0.75rem 1rem}}
+
+  /* ── RESOURCES BAR ────────────────────────────────────── */
+  .resources-bar{display:flex;gap:0.5rem;flex-wrap:wrap;background:var(--dark2);border:1px solid var(--border);padding:0.6rem 1rem;margin-bottom:1.5rem;align-items:center}
+  .res-item{display:flex;align-items:center;gap:0.35rem;font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;padding:0.2rem 0.5rem;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+  .res-icon{font-size:0.9rem}.res-value{color:var(--text);font-weight:600}.res-rate{color:var(--green);font-size:0.55rem}.res-rate.negative{color:var(--red)}
+  .nation-view{display:grid;grid-template-columns:1fr 320px;gap:1.5rem}
+  .province-card{background:var(--dark2);border:1px solid var(--border);padding:1rem;cursor:pointer;transition:all 0.2s;margin-bottom:0.5rem}
+  .province-card:hover{border-color:var(--gold)}.province-card.selected{border-color:var(--gold);background:var(--dark3)}
+  .province-name{font-family:"Cinzel",serif;font-size:0.9rem;color:var(--gold);margin-bottom:0.4rem}
+  .province-meta{font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;display:flex;gap:0.5rem;flex-wrap:wrap}
+  .province-resources{display:flex;gap:0.3rem;margin-top:0.4rem;flex-wrap:wrap}
+  .res-tag{font-family:var(--mono);font-size:0.55rem;padding:0.1rem 0.4rem;border:1px solid var(--border);text-transform:uppercase;letter-spacing:0.1em}
+  .city-item{display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;background:var(--dark3);border:1px solid var(--border);margin-bottom:0.3rem;cursor:pointer;transition:all 0.2s}
+  .city-item:hover{border-color:var(--gold)}
+  .city-name{font-family:"Cinzel",serif;font-size:0.8rem;color:var(--text)}
+  .city-pop{font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)}
+  .building-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.5rem}
+  .building-card{background:var(--dark3);border:1px solid var(--border);padding:0.75rem;text-align:center;cursor:pointer;transition:all 0.2s}
+  .building-card:hover{border-color:var(--gold)}
+  .building-icon{font-size:1.5rem;display:block;margin-bottom:0.3rem}
+  .building-name{font-family:"Cinzel",serif;font-size:0.65rem;color:var(--text);letter-spacing:0.05em}
+  .building-level{font-family:var(--mono);font-size:0.55rem;color:var(--gold);margin-top:0.2rem}
+  .unit-card{display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;background:var(--dark3);border:1px solid var(--border);margin-bottom:0.4rem;cursor:pointer;transition:all 0.2s}
+  .unit-card:hover{border-color:var(--gold)}
+  .unit-icon{font-size:1.2rem;min-width:1.5rem}
+  .unit-info{flex:1}
+  .unit-name{font-family:"Cinzel",serif;font-size:0.78rem;color:var(--text)}
+  .unit-stats{font-family:var(--mono);font-size:0.58rem;color:var(--text-dim);margin-top:0.2rem}
+  .unit-status-badge{font-family:var(--mono);font-size:0.55rem;padding:0.15rem 0.4rem;border:1px solid var(--border);text-transform:uppercase;letter-spacing:0.08em}
+  .unit-moving{border-color:rgba(41,128,185,0.5);color:var(--blue)}.unit-idle{border-color:var(--border);color:var(--text-dim)}.unit-attacking{border-color:rgba(192,57,43,0.5);color:var(--red)}
+  .inner-tabs{display:flex;gap:0.25rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0.5rem}
+  .inner-tab{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.4rem 0.8rem;background:none;border:1px solid transparent;color:var(--text-dim);cursor:pointer;transition:all 0.2s}
+  .inner-tab:hover{color:var(--text)}.inner-tab.active{color:var(--gold);border-color:var(--border-bright);background:rgba(201,168,76,0.05)}
+  .inner-panel{display:none}.inner-panel.active{display:block}
+  .build-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.75rem;margin-top:1rem}
+  .build-option{background:var(--dark3);border:1px solid var(--border);padding:1rem;text-align:center;cursor:pointer;transition:all 0.2s}
+  .build-option:hover{border-color:var(--gold);background:var(--dark4)}
+  .build-option-icon{font-size:2rem;display:block;margin-bottom:0.5rem}
+  .build-option-name{font-family:"Cinzel",serif;font-size:0.72rem;color:var(--text);margin-bottom:0.3rem}
+  .build-option-cost{font-family:var(--mono);font-size:0.58rem;color:var(--gold-dim);text-transform:uppercase}
+  .build-option-perk{font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;line-height:1.3}
 </style>
 </head>
 <body>
@@ -280,6 +321,7 @@
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="switchTab('world',this)">🌍 World</button>
       <button class="nav-tab" onclick="switchTab('dashboard',this)">🏛 My Nation</button>
+      <button class="nav-tab" onclick="switchTab('interior',this)">🗺 Interior</button>
       <button class="nav-tab" onclick="switchTab('diplomacy',this)">🤝 Diplomacy</button>
       <button class="nav-tab" onclick="switchTab('military',this)">⚔️ Military</button>
       <button class="nav-tab" onclick="switchTab('economy',this)">💰 Economy</button>
@@ -326,6 +368,16 @@
           <div class="dominance-entries" id="dominance-list"><div class="loading">Loading...</div></div>
         </div>
       </div>
+    </div>
+
+    <!-- INTERIOR TAB -->
+    <div id="tab-interior" class="tab-panel">
+      <div class="section-header">
+        <div class="section-title">Nation Interior</div>
+        <div class="section-sub">Provinces · Cities · Buildings · Units · Resources</div>
+      </div>
+      <div id="resources-bar-wrap"></div>
+      <div id="interior-content"><div class="empty-state">Join a country to access your nation's interior.</div></div>
     </div>
 
     <!-- DASHBOARD TAB -->
@@ -545,6 +597,7 @@ function switchTab(name,el){
   if(name==='news') loadNewsTab();
   if(name==='world') loadWorldTab();
   if(name==='dashboard'&&myCountry) renderDashboard();
+  if(name==='interior') renderInterior();
   if(name==='diplomacy') renderDiplomacy();
   if(name==='military') renderMilitary();
   if(name==='economy') renderEconomy();
@@ -1256,7 +1309,469 @@ async function loadNewsTab(){
   el.innerHTML=news.map(n=>`<div class="news-item"><div class="news-headline">${n.headline}</div>${n.body?`<div class="news-body">${n.body}</div>`:''}<div class="news-meta"><span class="news-category cat-${n.category}">${n.category}</span>${new Date(n.created_at).toLocaleString()}${n.countries?` · ${n.countries.flag} ${n.countries.name}`:''}</div></div>`).join('');
 }
 
-// ── EXIT ROLE ─────────────────────────────────────────────────────────────────
+// ── INTERIOR SYSTEM ───────────────────────────────────────────────────────────
+const BUILDING_DEFS = {
+  barracks:        { icon:'🪖', name:'Barracks',          cost:{money:300,steel:50},  time:120,  perk:'Train infantry & armored units. +10% unit morale.', produces:'units' },
+  factory:         { icon:'🏭', name:'Factory',           cost:{money:400,steel:100}, time:180,  perk:'+20 steel/tick. Enables vehicle production.', produces:'steel' },
+  research_lab:    { icon:'🔬', name:'Research Lab',      cost:{money:500,electronics:50}, time:240, perk:'Unlocks advanced unit upgrades & tech tree.', produces:'tech' },
+  port:            { icon:'⚓', name:'Port',              cost:{money:350,steel:80},  time:150,  perk:'Naval unit production. +trade income.', produces:'units' },
+  airfield:        { icon:'✈️', name:'Airfield',          cost:{money:400,steel:60},  time:150,  perk:'Air unit production. Air superiority bonus.', produces:'units' },
+  oil_rig:         { icon:'🛢️', name:'Oil Rig',           cost:{money:600,steel:120}, time:300,  perk:'+40 oil/tick per level. Powers military vehicles.', produces:'oil' },
+  mine:            { icon:'⛏️', name:'Mine',              cost:{money:250,steel:30},  time:120,  perk:'+25 rare earth/tick. Required for electronics.', produces:'rare_earth' },
+  steel_mill:      { icon:'🔩', name:'Steel Mill',        cost:{money:350,steel:50},  time:150,  perk:'+30 steel/tick. Required for construction.', produces:'steel' },
+  farm:            { icon:'🌾', name:'Farm Complex',      cost:{money:200},           time:90,   perk:'+35 food/tick. Reduces civilian unrest.', produces:'food' },
+  electronics_plant:{ icon:'💻', name:'Electronics Plant', cost:{money:500,rare_earth:50}, time:200, perk:'+20 electronics/tick. Boosts research speed.', produces:'electronics' },
+  uranium_mine:    { icon:'☢️', name:'Uranium Mine',      cost:{money:800,steel:100}, time:360,  perk:'+10 uranium/tick. Required for nuclear program.', produces:'uranium' },
+  fortress:        { icon:'🏰', name:'Fortress',          cost:{money:400,steel:150}, time:200,  perk:'+3 fortification. -30% damage taken in province.', produces:'defense' },
+  supply_depot:    { icon:'📦', name:'Supply Depot',      cost:{money:200,food:50},   time:90,   perk:'+15% unit readiness. Reduces supply line penalties.', produces:'logistics' },
+  nuclear_plant:   { icon:'⚛️', name:'Nuclear Plant',     cost:{money:1200,uranium:100,steel:200}, time:600, perk:'+50 power. Enables nuclear missile production.', produces:'power' },
+  stock_exchange:  { icon:'📈', name:'Stock Exchange',    cost:{money:600,electronics:80}, time:240, perk:'+15% money/tick. Unlocks economic warfare actions.', produces:'money' },
+  propaganda_tower:{ icon:'📡', name:'Propaganda Tower',  cost:{money:300,electronics:30}, time:120, perk:'+5 morale/tick. Boosts approval in province.', produces:'morale' },
+};
+
+const UNIT_DEFS = {
+  infantry:   { icon:'🪖', name:'Infantry',         cost:{money:50,food:10},          time:30,  speed:40,  attack:15, defense:20, desc:'Versatile ground force. Good defense.' },
+  tank:       { icon:'🚗', name:'Armored Division', cost:{money:200,steel:50,oil:30},  time:90,  speed:60,  attack:45, defense:35, desc:'Heavy attack power. Needs oil supply.' },
+  artillery:  { icon:'💥', name:'Artillery',        cost:{money:150,steel:40},         time:60,  speed:25,  attack:55, defense:10, desc:'Long range bombardment. Low mobility.' },
+  fighter:    { icon:'✈️', name:'Fighter Jet',      cost:{money:300,oil:50,electronics:30}, time:120, speed:900, attack:60, defense:40, desc:'Air superiority. Fast response.' },
+  bomber:     { icon:'💣', name:'Strategic Bomber', cost:{money:400,oil:70,electronics:40}, time:150, speed:700, attack:85, defense:15, desc:'Heavy bombing. Destroys infrastructure.' },
+  drone:      { icon:'🤖', name:'Drone Squadron',   cost:{money:250,electronics:60},   time:100, speed:500, attack:40, defense:20, desc:'Low cost recon & strike. No pilot risk.' },
+  destroyer:  { icon:'🚢', name:'Destroyer',        cost:{money:350,steel:100,oil:40}, time:180, speed:60,  attack:50, defense:45, desc:'Naval combat. Anti-submarine warfare.' },
+  submarine:  { icon:'🔱', name:'Submarine',        cost:{money:400,steel:120,electronics:50}, time:200, speed:30, attack:70, defense:60, desc:'Stealth naval unit. Disrupts trade lanes.' },
+  missile:    { icon:'🚀', name:'Missile Battery',  cost:{money:500,steel:80,electronics:70}, time:150, speed:0, attack:90, defense:5, desc:'Long range precision strike capability.' },
+};
+
+// Speed multiplier: 10x real life
+const SPEED_MULTIPLIER = 10;
+// km/h → ms per km (10x faster)
+function travelTime(distKm, speedKmh){ return (distKm / (speedKmh * SPEED_MULTIPLIER)) * 3600 * 1000; }
+
+let selectedProvince = null;
+let myProvinces = [], myCities = [], myBuildings = [], myUnits = [], myResources = null;
+
+async function renderInterior(){
+  if(!myCountry){ document.getElementById('interior-content').innerHTML='<div class="empty-state">Join a country to access your nation\'s interior.</div>'; return; }
+
+  // Load all data
+  const [provRes, cityRes, buildRes, unitRes, resRes] = await Promise.all([
+    sb.from('provinces').select('*').eq('country_id', myCountry.id),
+    sb.from('cities').select('*').eq('country_id', myCountry.id),
+    sb.from('buildings').select('*').eq('country_id', myCountry.id),
+    sb.from('units').select('*').eq('country_id', myCountry.id),
+    sb.from('country_resources').select('*').eq('country_id', myCountry.id).single(),
+  ]);
+
+  myProvinces = provRes.data || [];
+  myCities = cityRes.data || [];
+  myBuildings = buildRes.data || [];
+  myUnits = unitRes.data || [];
+  myResources = resRes.data;
+
+  renderResourcesBar();
+
+  if(myProvinces.length === 0){
+    document.getElementById('interior-content').innerHTML=`
+      <div style="text-align:center;padding:2rem;color:var(--text-dim)">
+        <div style="font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);margin-bottom:1rem">No province data yet for ${myCountry.name}</div>
+        <p style="font-size:0.9rem;line-height:1.6">Province data is being added country by country. Czechia, USA, Russia, China, Germany, France, and UK are fully loaded.<br><br>If you're playing as another country, run the SQL schema to add your provinces.</p>
+      </div>`;
+    return;
+  }
+
+  if(!selectedProvince) selectedProvince = myProvinces[0];
+
+  document.getElementById('interior-content').innerHTML=`
+    <div class="nation-view">
+      <div>
+        <div class="inner-tabs">
+          <button class="inner-tab active" onclick="switchInnerTab('provinces',this)">🗺 Provinces</button>
+          <button class="inner-tab" onclick="switchInnerTab('units',this)">⚔️ Units</button>
+          <button class="inner-tab" onclick="switchInnerTab('build',this)">🏗 Construct</button>
+          <button class="inner-tab" onclick="switchInnerTab('mobilize',this)">🪖 Mobilize</button>
+        </div>
+
+        <div id="inner-provinces" class="inner-panel active">
+          ${renderProvinceDetail()}
+        </div>
+        <div id="inner-units" class="inner-panel">
+          ${renderUnitsPanel()}
+        </div>
+        <div id="inner-build" class="inner-panel">
+          ${renderBuildPanel()}
+        </div>
+        <div id="inner-mobilize" class="inner-panel">
+          ${renderMobilizePanel()}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:0.75rem;text-transform:uppercase">Provinces</div>
+        ${myProvinces.map(p=>`
+          <div class="province-card ${selectedProvince?.id===p.id?'selected':''}" onclick="selectProvince('${p.id}')">
+            <div class="province-name">${p.capital?'🏛 ':''}${p.name}</div>
+            <div class="province-meta">
+              <span>Pop: ${(p.population/1000000).toFixed(1)}M</span>
+              <span>Dev: ${p.development}%</span>
+            </div>
+            <div class="province-resources">
+              ${p.has_oil?'<span class="res-tag" style="color:#f39c12">🛢 Oil</span>':''}
+              ${p.has_gas?'<span class="res-tag" style="color:#85c1e9">⛽ Gas</span>':''}
+              ${p.has_food?'<span class="res-tag" style="color:#82e0aa">🌾 Food</span>':''}
+              ${p.has_steel?'<span class="res-tag" style="color:#aab7b8">🔩 Steel</span>':''}
+              ${p.has_rare_earth?'<span class="res-tag" style="color:#bb8fce">💎 Rare Earth</span>':''}
+              ${p.has_uranium?'<span class="res-tag" style="color:#82e0aa">☢️ Uranium</span>':''}
+            </div>
+            <div style="margin-top:0.4rem;font-family:var(--mono);font-size:0.58rem;color:var(--text-dim)">
+              🏗 ${myBuildings.filter(b=>b.province_id===p.id).length} buildings ·
+              ⚔️ ${myUnits.filter(u=>u.province_id===p.id).length} unit groups
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderResourcesBar(){
+  const r = myResources;
+  if(!r){ document.getElementById('resources-bar-wrap').innerHTML=''; return; }
+  document.getElementById('resources-bar-wrap').innerHTML=`
+    <div class="resources-bar">
+      <span style="font-family:var(--mono);font-size:0.6rem;color:var(--gold);letter-spacing:0.15em;margin-right:0.5rem">RESOURCES</span>
+      ${resItem('💰','Money',r.money,r.money_rate)}
+      ${resItem('🛢️','Oil',r.oil,r.oil_rate)}
+      ${resItem('⛽','Gas',r.gas,r.gas_rate)}
+      ${resItem('🌾','Food',r.food,r.food_rate)}
+      ${resItem('🔩','Steel',r.steel,r.steel_rate)}
+      ${resItem('💎','Rare Earth',r.rare_earth,r.rare_earth_rate)}
+      ${resItem('☢️','Uranium',r.uranium,r.uranium_rate)}
+      ${resItem('💻','Electronics',r.electronics,r.electronics_rate)}
+      ${resItem('❤️','Morale',r.morale,0)}
+    </div>`;
+}
+
+function resItem(icon,label,val,rate){
+  return `<div class="res-item"><span class="res-icon">${icon}</span><span style="opacity:0.6;margin-right:0.2rem">${label}</span><span class="res-value">${val}</span>${rate>0?`<span class="res-rate">+${rate}/h</span>`:''}</div>`;
+}
+
+function switchInnerTab(name,el){
+  document.querySelectorAll('.inner-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.inner-panel').forEach(p=>p.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('inner-'+name)?.classList.add('active');
+}
+
+function selectProvince(id){
+  selectedProvince = myProvinces.find(p=>p.id===id);
+  renderInterior();
+}
+
+function renderProvinceDetail(){
+  const p = selectedProvince;
+  if(!p) return '<div class="empty-state">Select a province</div>';
+  const cities = myCities.filter(c=>c.province_id===p.id);
+  const buildings = myBuildings.filter(b=>b.province_id===p.id);
+  const units = myUnits.filter(u=>u.province_id===p.id);
+
+  return `
+    <div style="font-family:'Cinzel',serif;font-size:1.1rem;color:var(--gold);margin-bottom:1rem">${p.capital?'🏛 ':''}${p.name}</div>
+
+    <div class="grid-2" style="gap:1rem;margin-bottom:1.5rem">
+      <div class="card" style="padding:1rem">
+        <div class="card-title">Province Stats</div>
+        ${statRow('Population',(p.population/1000).toFixed(0)+'k')}
+        ${statRow('Development',p.development+'%', p.development>70?'good':p.development>40?'warn':'bad')}
+        ${statRow('Stability',p.stability+'%', p.stability>60?'good':p.stability>35?'warn':'bad')}
+        ${statRow('Fortification',p.fortification+'/10')}
+      </div>
+      <div class="card" style="padding:1rem">
+        <div class="card-title">Resources Present</div>
+        ${p.has_oil?statRow('Oil','🛢️ Extractable','good'):''}
+        ${p.has_gas?statRow('Gas','⛽ Extractable','good'):''}
+        ${p.has_food?statRow('Food','🌾 Farmable','good'):''}
+        ${p.has_steel?statRow('Steel','🔩 Minable','good'):''}
+        ${p.has_rare_earth?statRow('Rare Earth','💎 Minable','good'):''}
+        ${p.has_uranium?statRow('Uranium','☢️ Extractable','good'):''}
+        ${(!p.has_oil&&!p.has_gas&&!p.has_food&&!p.has_steel&&!p.has_rare_earth&&!p.has_uranium)?'<div style="color:var(--text-dim);font-size:0.85rem;font-style:italic">No special resources</div>':''}
+      </div>
+    </div>
+
+    <div style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:0.5rem;text-transform:uppercase">Cities (${cities.length})</div>
+    ${cities.length===0?'<div style="color:var(--text-dim);font-size:0.85rem;font-style:italic;margin-bottom:1rem">No cities in this province</div>':
+      cities.map(c=>`<div class="city-item"><span class="city-name">${c.capital?'⭐ ':''}${c.name}</span><span class="city-pop">Pop: ${(c.population/1000).toFixed(0)}k</span></div>`).join('')}
+
+    <div style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold);letter-spacing:0.1em;margin:1rem 0 0.5rem;text-transform:uppercase">Buildings (${buildings.length})</div>
+    ${buildings.length===0?'<div style="color:var(--text-dim);font-size:0.85rem;font-style:italic;margin-bottom:1rem">No buildings. Go to Construct tab to build.</div>':
+      `<div class="building-grid">${buildings.map(b=>{
+        const def=BUILDING_DEFS[b.type]||{icon:'🏠',name:b.type};
+        return `<div class="building-card"><span class="building-icon">${def.icon}</span><div class="building-name">${def.name}</div><div class="building-level">Level ${b.level}</div><div class="building-status" style="color:${b.status==='active'?'var(--green)':b.status==='under_construction'?'#f39c12':'var(--red)'}">${b.status}</div></div>`;
+      }).join('')}</div>`}
+
+    <div style="font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold);letter-spacing:0.1em;margin:1rem 0 0.5rem;text-transform:uppercase">Units Stationed (${units.length})</div>
+    ${units.length===0?'<div style="color:var(--text-dim);font-size:0.85rem;font-style:italic">No units. Go to Mobilize tab to deploy.</div>':
+      units.map(u=>{
+        const def=UNIT_DEFS[u.type]||{icon:'⚔️',name:u.type};
+        return `<div class="unit-card"><span class="unit-icon">${def.icon}</span><div class="unit-info"><div class="unit-name">${def.name}</div><div class="unit-stats">Size: ${u.size.toLocaleString()} · HP: ${u.health}% · Morale: ${u.morale}%</div></div><span class="unit-status-badge unit-${u.status}">${u.status}</span></div>`;
+      }).join('')}
+  `;
+}
+
+function renderUnitsPanel(){
+  if(myUnits.length===0) return '<div class="empty-state">No units. Mobilize troops from the Mobilize tab.</div>';
+  return `
+    <div style="margin-bottom:1rem;font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.15em">All Units — ${myUnits.length} groups</div>
+    ${myUnits.map(u=>{
+      const def=UNIT_DEFS[u.type]||{icon:'⚔️',name:u.type};
+      const prov=myProvinces.find(p=>p.id===u.province_id);
+      const isMoving=u.status==='moving'&&u.move_ends_at;
+      const eta=isMoving?Math.max(0,Math.round((new Date(u.move_ends_at)-Date.now())/60000)):0;
+      return `<div class="unit-card" onclick="openUnitActions('${u.id}')">
+        <span class="unit-icon">${def.icon}</span>
+        <div class="unit-info">
+          <div class="unit-name">${def.name} <span style="color:var(--text-dim);font-size:0.75rem">· ${prov?.name||'Unknown'}</span></div>
+          <div class="unit-stats">Size: ${u.size.toLocaleString()} · HP: ${u.health}% · Morale: ${u.morale}% · XP: ${u.experience}</div>
+          ${isMoving?`<div style="color:var(--blue);font-family:var(--mono);font-size:0.58rem;margin-top:0.2rem">🚀 Moving — ETA: ${eta} min</div>`:''}
+        </div>
+        <span class="unit-status-badge unit-${u.status}">${u.status}</span>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function renderBuildPanel(){
+  const p = selectedProvince;
+  return `
+    <div style="font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold);margin-bottom:0.5rem">Build in: ${p?.name||'Select a province'}</div>
+    <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:1rem">Select a building to construct. Higher levels cost more but produce more.</div>
+    <div class="build-grid">
+      ${Object.entries(BUILDING_DEFS).map(([type,def])=>{
+        const costStr=Object.entries(def.cost).map(([k,v])=>`${v} ${k}`).join(' + ');
+        const timeStr=def.time<60?`${def.time}m`:`${Math.round(def.time/60)}h`;
+        return `<div class="build-option" onclick="startConstruction('${type}')">
+          <span class="build-option-icon">${def.icon}</span>
+          <div class="build-option-name">${def.name}</div>
+          <div class="build-option-cost">${costStr}</div>
+          <div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);margin-top:0.2rem">⏱ ${timeStr}</div>
+          <div class="build-option-perk">${def.perk}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderMobilizePanel(){
+  const p = selectedProvince;
+  const hasBarracks = myBuildings.some(b=>b.province_id===p?.id&&b.type==='barracks'&&b.status==='active');
+  const hasAirfield = myBuildings.some(b=>b.province_id===p?.id&&b.type==='airfield'&&b.status==='active');
+  const hasPort = myBuildings.some(b=>b.province_id===p?.id&&b.type==='port'&&b.status==='active');
+
+  return `
+    <div style="font-family:'Cinzel',serif;font-size:0.85rem;color:var(--gold);margin-bottom:0.5rem">Mobilize in: ${p?.name||'Select a province'}</div>
+    <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);margin-bottom:1rem">Units require buildings. Some units need oil to operate.</div>
+    <div class="build-grid">
+      ${Object.entries(UNIT_DEFS).map(([type,def])=>{
+        const isAir=['fighter','bomber','drone'].includes(type);
+        const isNaval=['destroyer','submarine'].includes(type);
+        const needsBuilding=isAir?'airfield':isNaval?'port':'barracks';
+        const hasBuilding=isAir?hasAirfield:isNaval?hasPort:hasBarracks;
+        const costStr=Object.entries(def.cost).map(([k,v])=>`${v} ${k}`).join(' + ');
+        return `<div class="build-option ${!hasBuilding?'':''}\" onclick="${hasBuilding?`recruitUnit('${type}')`:`toast('Need a ${needsBuilding} in this province first!','error')`}" style="${!hasBuilding?'opacity:0.5;cursor:not-allowed':''}">
+          <span class="build-option-icon">${def.icon}</span>
+          <div class="build-option-name">${def.name}</div>
+          <div class="build-option-cost">${costStr}</div>
+          <div style="font-family:var(--mono);font-size:0.55rem;color:var(--text-dim);margin-top:0.2rem">⚡ Atk:${def.attack} 🛡 Def:${def.defense} 💨 ${def.speed}km/h</div>
+          <div class="build-option-perk">${def.desc}</div>
+          ${!hasBuilding?`<div style="font-family:var(--mono);font-size:0.55rem;color:var(--red);margin-top:0.3rem">⚠ Needs ${needsBuilding}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function startConstruction(type){
+  const def = BUILDING_DEFS[type];
+  const p = selectedProvince;
+  if(!p||!myResources) return;
+
+  // Check resources
+  for(const [res,amount] of Object.entries(def.cost)){
+    if((myResources[res]||0) < amount){
+      toast(`Not enough ${res}! Need ${amount}, have ${myResources[res]||0}.`,'error');
+      return;
+    }
+  }
+
+  const endsAt = new Date(Date.now() + def.time * 60 * 1000).toISOString();
+
+  // Deduct resources
+  const updates={};
+  for(const [res,amount] of Object.entries(def.cost)) updates[res]=(myResources[res]||0)-amount;
+  updates.updated_at=new Date().toISOString();
+  await sb.from('country_resources').update(updates).eq('country_id',myCountry.id);
+
+  // Create building
+  await sb.from('buildings').insert({province_id:p.id,country_id:myCountry.id,type,level:1,status:'under_construction',construction_ends_at:endsAt});
+
+  // Post news
+  await sb.from('news').insert({headline:`🏗 ${myCountry.flag} ${myCountry.name} begins construction of ${def.name} in ${p.name}.`,category:'general',country_id:myCountry.id});
+
+  toast(`${def.name} construction started in ${p.name}! Completes in ${def.time<60?def.time+'m':Math.round(def.time/60)+'h'}.`,'success');
+  await renderInterior();
+}
+
+async function recruitUnit(type){
+  const def = UNIT_DEFS[type];
+  const p = selectedProvince;
+  if(!p||!myResources) return;
+
+  for(const [res,amount] of Object.entries(def.cost)){
+    if((myResources[res]||0) < amount){
+      toast(`Not enough ${res}! Need ${amount}, have ${myResources[res]||0}.`,'error');
+      return;
+    }
+  }
+
+  const updates={};
+  for(const [res,amount] of Object.entries(def.cost)) updates[res]=(myResources[res]||0)-amount;
+  updates.updated_at=new Date().toISOString();
+  await sb.from('country_resources').update(updates).eq('country_id',myCountry.id);
+
+  const size={infantry:1000,tank:10,artillery:5,fighter:1,bomber:1,drone:5,destroyer:1,submarine:1,missile:2}[type]||100;
+  await sb.from('units').insert({country_id:myCountry.id,province_id:p.id,type,size,health:100,morale:80,status:'idle',lat:p.lat,lng:p.lng});
+  await sb.from('news').insert({headline:`${myCountry.flag} ${myCountry.name} deploys new ${def.name} unit in ${p.name}.`,category:'general',country_id:myCountry.id});
+
+  toast(`${def.name} deployed in ${p.name}!`,'success');
+  await renderInterior();
+}
+
+async function openUnitActions(unitId){
+  const u = myUnits.find(x=>x.id===unitId);
+  if(!u) return;
+  const def = UNIT_DEFS[u.type]||{icon:'⚔️',name:u.type};
+  const currentProv = myProvinces.find(p=>p.id===u.province_id);
+
+  // Get all provinces (own + neighbors for movement)
+  const {data:allProvs} = await sb.from('provinces').select('id,name,country_id').order('name');
+  const provOptions=(allProvs||[]).filter(p=>p.id!==u.province_id).map(p=>`<option value="${p.id}">${p.name} (${p.country_id})</option>`).join('');
+
+  document.getElementById('action-modal-content').innerHTML=`
+    <div class="modal-title">${def.icon} ${def.name}</div>
+    <div style="background:var(--dark3);border:1px solid var(--border);padding:1rem;margin-bottom:1.5rem">
+      <div class="grid-2" style="gap:0.5rem">
+        ${statRow('Location',currentProv?.name||'Unknown')}
+        ${statRow('Size',u.size.toLocaleString())}
+        ${statRow('Health',u.health+'%',u.health>60?'good':u.health>30?'warn':'bad')}
+        ${statRow('Morale',u.morale+'%',u.morale>60?'good':u.morale>30?'warn':'bad')}
+        ${statRow('Experience',u.experience+' XP')}
+        ${statRow('Status',u.status)}
+      </div>
+    </div>
+    <div class="form-group"><label>Move / Attack Province</label><select id="unit-target-prov">${provOptions}</select></div>
+    <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-bottom:1rem">Speed: ${def.speed} km/h × 10x = ${def.speed*10} km/h effective. Movement time depends on distance.</div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <button class="btn btn-success" style="flex:1" onclick="moveUnit('${u.id}')">🚀 Move</button>
+      <button class="btn btn-danger" onclick="attackWithUnit('${u.id}')">⚔️ Attack</button>
+      <button class="btn btn-ghost" onclick="disbandUnit('${u.id}')">❌ Disband</button>
+      <button class="btn btn-ghost" onclick="closeModal('action')">Cancel</button>
+    </div>
+  `;
+  openModal('action');
+}
+
+async function moveUnit(unitId){
+  const targetProvId=document.getElementById('unit-target-prov')?.value;
+  if(!targetProvId) return;
+  const {data:targetProv}=await sb.from('provinces').select('*').eq('id',targetProvId).single();
+  const u=myUnits.find(x=>x.id===unitId);
+  const def=UNIT_DEFS[u?.type]||{speed:50};
+
+  // Estimate distance from lat/lng
+  const fromProv=myProvinces.find(p=>p.id===u.province_id);
+  const dist=fromProv&&targetProv?Math.round(Math.sqrt(Math.pow((fromProv.lat-targetProv.lat)*111,2)+Math.pow((fromProv.lng-targetProv.lng)*85,2))):500;
+  const travelMs=travelTime(dist,def.speed);
+  const endsAt=new Date(Date.now()+travelMs).toISOString();
+  const etaMin=Math.round(travelMs/60000);
+
+  await sb.from('units').update({status:'moving',target_province:targetProvId,move_started_at:new Date().toISOString(),move_ends_at:endsAt,updated_at:new Date().toISOString()}).eq('id',unitId);
+  await sb.from('news').insert({headline:`${myCountry.flag} ${myCountry.name} moves ${def.icon} unit toward ${targetProv?.name}. ETA: ${etaMin} minutes.`,category:'general',country_id:myCountry.id});
+
+  closeModal('action');
+  toast(`Unit moving to ${targetProv?.name}. ETA: ${etaMin} minutes.`,'success');
+  await renderInterior();
+}
+
+async function attackWithUnit(unitId){
+  const targetProvId=document.getElementById('unit-target-prov')?.value;
+  if(!targetProvId) return;
+  const {data:targetProv}=await sb.from('provinces').select('*').eq('id',targetProvId).single();
+  const u=myUnits.find(x=>x.id===unitId);
+  const def=UNIT_DEFS[u?.type]||{speed:50,icon:'⚔️',name:'Unit'};
+
+  await sb.from('units').update({status:'attacking',target_province:targetProvId,updated_at:new Date().toISOString()}).eq('id',unitId);
+  await sb.from('news').insert({headline:`⚔️ ${myCountry.flag} ${myCountry.name} launches ${def.icon} ${def.name} attack on ${targetProv?.name}!`,category:'war',country_id:myCountry.id});
+
+  closeModal('action');
+  toast(`${def.name} attacking ${targetProv?.name}!`,'success');
+  await renderInterior();
+}
+
+async function disbandUnit(unitId){
+  await sb.from('units').delete().eq('id',unitId);
+  closeModal('action');
+  toast('Unit disbanded.','success');
+  await renderInterior();
+}
+
+// Auto-complete constructions that have finished
+async function checkConstructions(){
+  if(!myCountry) return;
+  const now=new Date().toISOString();
+  const {data:done}=await sb.from('buildings').select('*').eq('country_id',myCountry.id).eq('status','under_construction').lt('construction_ends_at',now);
+  if(done&&done.length>0){
+    for(const b of done){
+      await sb.from('buildings').update({status:'active'}).eq('id',b.id);
+      const def=BUILDING_DEFS[b.type]||{name:b.type};
+      await sb.from('news').insert({headline:`✅ ${myCountry.flag} ${myCountry.name}: ${def.name} construction complete!`,category:'general',country_id:myCountry.id});
+    }
+  }
+}
+
+// Auto-complete unit movements
+async function checkUnitMovements(){
+  if(!myCountry) return;
+  const now=new Date().toISOString();
+  const {data:arrived}=await sb.from('units').select('*').eq('country_id',myCountry.id).eq('status','moving').lt('move_ends_at',now);
+  if(arrived&&arrived.length>0){
+    for(const u of arrived){
+      const {data:tProv}=await sb.from('provinces').select('*').eq('id',u.target_province).single();
+      await sb.from('units').update({status:'idle',province_id:u.target_province,target_province:null,move_started_at:null,move_ends_at:null,lat:tProv?.lat||u.lat,lng:tProv?.lng||u.lng,updated_at:now}).eq('id',u.id);
+    }
+  }
+}
+
+// Tick: run every 60 seconds
+setInterval(async()=>{
+  await checkConstructions();
+  await checkUnitMovements();
+  // Resource tick every minute (simplified hourly rates / 60)
+  if(myCountry&&myResources){
+    const r=myResources;
+    const updates={
+      oil:Math.min(9999,r.oil+Math.round(r.oil_rate/60)),
+      gas:Math.min(9999,r.gas+Math.round(r.gas_rate/60)),
+      food:Math.min(9999,r.food+Math.round(r.food_rate/60)),
+      steel:Math.min(9999,r.steel+Math.round(r.steel_rate/60)),
+      rare_earth:Math.min(9999,r.rare_earth+Math.round(r.rare_earth_rate/60)),
+      uranium:Math.min(9999,r.uranium+Math.round(r.uranium_rate/60)),
+      electronics:Math.min(9999,r.electronics+Math.round(r.electronics_rate/60)),
+      money:Math.min(999999,r.money+Math.round(r.money_rate/60)),
+      updated_at:new Date().toISOString()
+    };
+    await sb.from('country_resources').update(updates).eq('country_id',myCountry.id);
+    myResources={...myResources,...updates};
+    renderResourcesBar();
+  }
+},60000);
+
+
 function confirmExitRole(){
   document.getElementById('action-modal-content').innerHTML=`
     <div class="modal-title">🚪 Resign Your Role</div>
