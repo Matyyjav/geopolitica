@@ -174,7 +174,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);color:va
 <!-- GAME -->
 <div id="game">
   <svg id="mapsvg"></svg>
-  <canvas id="overlay" style="position:absolute;top:46px;left:0;right:0;bottom:36px;pointer-events:auto;z-index:10;cursor:default"></canvas>
 
   <div id="topbar">
     <span class="tb-brand">GEOPOLITICA</span>
@@ -207,7 +206,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);color:va
   </div>
 
   <!-- Move mode banner -->
-  <div id="movebanner">🚀 Move Mode — Click a province to send your unit</div>
+  <div id="movebanner" style="display:flex;align-items:center;gap:1rem">🚀 MOVE MODE — Click anywhere on the map to move unit <button onclick="cancelMove()" style="background:rgba(192,57,43,.3);border:1px solid #c0392b;color:#e74c3c;font-family:Share Tech Mono;font-size:.55rem;padding:.2rem .5rem;cursor:pointer;letter-spacing:.08em">✕ CANCEL</button></div>
 
   <!-- Side panel -->
   <div id="panel">
@@ -395,481 +394,411 @@ async function showGame(){
   buildMap();
   loadTicker();
   setInterval(gameTick,60000);
-  setInterval(animateUnits,800); // faster animation = smoother unit movement
-  // Canvas click handler — intercepts clicks on units, provinces, cities
-  const canvas=document.getElementById('overlay');
-  canvas.addEventListener('click',handleCanvasClick);
-  canvas.addEventListener('mousemove',handleCanvasHover);
+  setInterval(animateUnits,1200);
+  setupMapClick();
 }
-
-function handleCanvasClick(e){
-  const rect=e.currentTarget.getBoundingClientRect();
-  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  // If panel is open, ignore clicks in panel area
-  const panel=document.getElementById('panel');
-  if(panel.classList.contains('open')&&mx>window.innerWidth-350)return;
-  // Check unit hitboxes first
-  for(const h of unitHitboxes){
-    if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h){
-      selectUnit(h.id);
-      return;
-    }
-  }
-  // Move mode - click anywhere to move to nearest province
-  if(moveMode&&selUnit){
-    // Convert canvas click to map coordinates
-    const pt=curT.invert([mx,my]);
-    const inv=proj.invert(pt);
-    if(inv){
-      const [lng,lat]=inv;
-      let best=null,bestD=Infinity;
-      PROVINCES.forEach(p=>{
-        if(!p.lat||!p.lng)return;
-        const d=Math.hypot(p.lat-lat,p.lng-lng);
-        if(d<bestD){bestD=d;best=p;}
-      });
-      if(best){doMove(selUnit,best.id);disableMoveMode();return;}
-    }
-  }
-  // Check province dots
-  for(const p of PROVINCES){
-    if(!p.lat||!p.lng)continue;
-    const xy=getScreenXY(p.lat,p.lng);
-    if(!xy)continue;
-    const d=Math.hypot(mx-xy[0],my-xy[1]);
-    if(d<8){openPanel('province',p);return;}
-  }
-  // Check city dots
-  for(const ci of CITIES){
-    if(!ci.lat||!ci.lng)continue;
-    const xy=getScreenXY(ci.lat,ci.lng);
-    if(!xy)continue;
-    const d=Math.hypot(mx-xy[0],my-xy[1]);
-    if(d<10){openPanel('city',ci);return;}
-  }
-}
-
-function handleCanvasHover(e){
-  const rect=e.currentTarget.getBoundingClientRect();
-  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-  let cursor='default';
-  if(moveMode){cursor='crosshair';}
-  else{
-    for(const h of unitHitboxes){
-      if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h){cursor='pointer';break;}
-    }
-  }
-  e.currentTarget.style.cursor=cursor;
-}
-
-async function loadAll(){
-  const [cr,pr,ci]=await Promise.all([
-    SB.from('countries').select('*').order('gdp',{ascending:false}),
-    SB.from('provinces').select('*'),
-    SB.from('cities').select('*'),
-  ]);
-  COUNTRIES=cr.data||[];
-  PROVINCES=pr.data||[];
-  CITIES=ci.data||[];
-  if(COUNTRY){
-    const [ur,rr]=await Promise.all([
-      SB.from('units').select('*').eq('country_id',COUNTRY.id),
-      SB.from('country_resources').select('*').eq('country_id',COUNTRY.id).single(),
-    ]);
-    UNITS=ur.data||[];
-    RES=rr.data;
-    renderNcard();
-    renderResBar();
-  }
-  renderLB();
-  // Render canvas overlays if map already loaded
-  if(proj)renderCanvas();
-}
-
-// ── MAP ───────────────────────────────────────────────────────────────────────
-let ROOT=null,curT=d3.zoomIdentity;
 
 function buildMap(){
-  const W=window.innerWidth,H=window.innerHeight;
+  const W=window.innerWidth, H=window.innerHeight;
   svg=d3.select('#mapsvg').attr('width',W).attr('height',H);
   svg.selectAll('*').remove();
-  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#05101e');
-  proj=d3.geoNaturalEarth1().scale(W/6.3).translate([W/2,H/2]);
-  gpath=d3.geoPath().projection(proj);
-  // ONE root group – zoom only touches this
-  ROOT=svg.append('g').attr('id','root');
-  const grat=d3.geoGraticule();
-  ROOT.append('path').datum(grat()).attr('d',gpath).attr('fill','none').attr('stroke','rgba(201,168,76,.04)').attr('stroke-width',.5);
+
+  // Ocean background
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#060e1c');
+
+  // Projection centered in the map viewport (between topbar and resbar)
+  const CY = (H + 46 - 36) / 2; // vertical center of map area
+  proj = d3.geoNaturalEarth1().scale(W/6.3).translate([W/2, CY]);
+  gpath = d3.geoPath().projection(proj);
+
+  // Single root group — ONLY thing zoom touches
+  ROOT = svg.append('g').attr('id','root');
+
+  // Graticule
+  const grat = d3.geoGraticule();
+  ROOT.append('path').datum(grat()).attr('d',gpath)
+    .attr('fill','none').attr('stroke','rgba(201,168,76,.05)').attr('stroke-width',.4);
+
   fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     .then(r=>r.json()).then(world=>{
-      const feats=topojson.feature(world,world.objects.countries);
-      const mesh=topojson.mesh(world,world.objects.countries,(a,b)=>a!==b);
-      // Countries
+      const feats = topojson.feature(world, world.objects.countries);
+      const mesh  = topojson.mesh(world, world.objects.countries, (a,b)=>a!==b);
+
+      // Country fills
       ROOT.append('g').attr('class','clayer')
         .selectAll('path').data(feats.features).enter().append('path')
-        .attr('d',gpath)
-        .attr('fill',d=>{const i=iso3(d.id);const c=i?COUNTRIES.find(x=>x.id===i):null;return c?ccolor(c):'#0e1e33';})
-        .attr('stroke','#05101e').attr('stroke-width',.4).style('cursor','pointer')
-        .on('mouseover',function(){d3.select(this).attr('stroke','#C9A84C').attr('stroke-width',1.2).attr('fill-opacity',.8);})
-        .on('mouseout',function(){d3.select(this).attr('stroke','#05101e').attr('stroke-width',.4).attr('fill-opacity',1);})
-        .on('click',function(e,d){
-          const i=iso3(d.id);
-          if(moveMode&&selUnit){pickMoveTarget(e);return;}
-          if(i)openPanel('country',COUNTRIES.find(x=>x.id===i));
+          .attr('d',gpath)
+          .attr('fill', d=>{ const i=iso3(d.id); const c=i&&COUNTRIES.find(x=>x.id===i); return c?ccolor(c):'#0d1b2e'; })
+          .attr('stroke','#060e1c').attr('stroke-width',.5)
+          .style('cursor','pointer')
+          .on('mouseover',function(){ d3.select(this).attr('stroke','#C9A84C').attr('stroke-width',1.5); })
+          .on('mouseout', function(){ d3.select(this).attr('stroke','#060e1c').attr('stroke-width',.5); })
+          .on('click', function(e,d){
+            if(moveMode && selUnit){ mapClick(e); return; }
+            const i=iso3(d.id);
+            if(i) openPanel('country', COUNTRIES.find(x=>x.id===i));
+          });
+
+      // Borders
+      ROOT.append('path').datum(mesh).attr('d',gpath)
+        .attr('fill','none').attr('stroke','rgba(255,255,255,.12)').attr('stroke-width',.3);
+
+      // Overlay layers (inside ROOT so they pan with map)
+      ROOT.append('g').attr('id','roads');
+      ROOT.append('g').attr('id','provs');
+      ROOT.append('g').attr('id','cityg');
+      ROOT.append('g').attr('id','units');
+
+      drawProvinces();
+      drawCities();
+      drawUnits();
+
+      // Zoom setup
+      ZOOM = d3.zoom()
+        .scaleExtent([0.8, 14])
+        .on('zoom', e=>{
+          ROOT.attr('transform', e.transform);
+          K = e.transform.k;
+          // Counter-scale all overlay markers so they stay constant pixel size
+          rescaleOverlays();
         });
-      ROOT.append('path').datum(mesh).attr('d',gpath).attr('fill','none').attr('stroke','rgba(255,255,255,.1)').attr('stroke-width',.3);
-      // Only roads layer in SVG (zooms with map), rest on canvas
-      ROOT.append('g').attr('class','rlayer');
-      drawOverlays();
-      // Zoom
-      const zoom=d3.zoom().scaleExtent([.5,16]).on('zoom',e=>{
-        ROOT.attr('transform',e.transform);
-        curT=e.transform;
-        renderCanvas(); // redraw canvas overlays at new zoom level
-      });
-      svg.call(zoom);
-      zoomB=zoom;
-      // Animation CSS
+      svg.call(ZOOM);
+
+      // Set initial view centered on Europe
+      const initialT = d3.zoomIdentity.translate(W*0.05, H*0.05).scale(1);
+      svg.call(ZOOM.transform, initialT);
+
+      // Add CSS for road animation
       if(!document.getElementById('mapcss')){
-        const s=document.createElement('style');s.id='mapcss';
-        s.textContent=`
-          .road-anim{stroke-dasharray:6,4;animation:rmove 1.2s linear infinite}
-          @keyframes rmove{to{stroke-dashoffset:-20}}
-          .pring{animation:pring 2s ease-out infinite}
-          @keyframes pring{0%{r:16;opacity:.6}100%{r:28;opacity:0}}
-        `;
+        const s=document.createElement('style'); s.id='mapcss';
+        s.textContent='.road-dash{stroke-dasharray:6,4;animation:rdash 1s linear infinite}@keyframes rdash{to{stroke-dashoffset:-20}}';
         document.head.appendChild(s);
       }
     });
 }
 
-function drawOverlays(){
-  if(!ROOT)return;
-  // Overlay layers still in ROOT for roads (dashed lines look better in SVG)
-  // but units, cities, provinces drawn on canvas for scale-independence
-  drawRoads();
-  renderCanvas();
+function rescaleOverlays(){
+  // Each marker group has a base transform + counter-scale
+  // So visual size stays constant regardless of zoom
+  const inv = 1/K;
+  ROOT.selectAll('.prov-g').each(function(d){
+    const [x,y]=d._xy;
+    d3.select(this).attr('transform',`translate(${x},${y}) scale(${inv})`);
+  });
+  ROOT.selectAll('.city-g').each(function(d){
+    const [x,y]=d._xy;
+    d3.select(this).attr('transform',`translate(${x},${y}) scale(${inv})`);
+  });
+  ROOT.selectAll('.unit-g').each(function(d){
+    const [x,y]=d._xy||[0,0];
+    d3.select(this).attr('transform',`translate(${x},${y}) scale(${inv})`);
+  });
 }
 
-function getScreenXY(lat,lng){
-  if(!proj||!curT)return null;
-  const mp=proj([lng,lat]);
-  if(!mp)return null;
-  return [curT.applyX(mp[0]), curT.applyY(mp[1])];
-}
-
-function renderCanvas(){
-  const canvas=document.getElementById('overlay');
-  if(!canvas||!proj)return;
-  const W=window.innerWidth,H=window.innerHeight-82; // minus topbar+resbar
-  canvas.width=W;canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,W,H);
-  drawProvincesCanvas(ctx);
-  drawCitiesCanvas(ctx);
-  drawUnitsCanvas(ctx);
-}
-
-function drawProvinces(){/* replaced by canvas */}
-
-function drawProvincesCanvas(ctx){
-  const sc=curT.k;
+function drawProvinces(){
+  if(!ROOT||!proj)return;
+  const layer=ROOT.select('#provs');
+  layer.selectAll('*').remove();
   PROVINCES.forEach(p=>{
     if(!p.lat||!p.lng)return;
-    const xy=getScreenXY(p.lat,p.lng);
-    if(!xy)return;
-    const [x,y]=xy;
-    if(x<-20||x>window.innerWidth+20||y<-20||y>window.innerHeight)return;
+    const xy=proj([p.lng,p.lat]); if(!xy)return;
     const mine=p.country_id===COUNTRY?.id;
-    const r=mine?5:3;
-    ctx.beginPath();
-    ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fillStyle=mine?'rgba(201,168,76,.2)':'rgba(255,255,255,.06)';
-    ctx.fill();
-    ctx.strokeStyle=mine?'rgba(201,168,76,.85)':'rgba(255,255,255,.2)';
-    ctx.lineWidth=mine?1.5:0.8;
-    ctx.stroke();
+    const g=layer.append('g').attr('class','prov-g')
+      .attr('transform',`translate(${xy[0]},${xy[1]}) scale(${1/K})`)
+      .style('cursor','pointer')
+      .datum({_xy:xy});
+    g.on('click',e=>{ e.stopPropagation();
+      if(moveMode&&selUnit){orderMove(p.id);return;}
+      openPanel('province',p);
+    });
+    g.append('circle').attr('r',mine?7:4)
+      .attr('fill',mine?'rgba(201,168,76,.18)':'rgba(255,255,255,.06)')
+      .attr('stroke',mine?'rgba(201,168,76,.9)':'rgba(255,255,255,.2)')
+      .attr('stroke-width',mine?1.5:0.8);
     if(p.capital){
-      ctx.fillStyle=mine?'#C9A84C':'rgba(255,255,255,.4)';
-      ctx.font='8px serif';
-      ctx.textAlign='center';
-      ctx.fillText('★',x,y+3);
+      g.append('text').attr('text-anchor','middle').attr('dominant-baseline','central')
+        .attr('font-size','8').attr('fill',mine?'#C9A84C':'rgba(255,255,255,.5)').text('★');
     }
   });
 }
 
-function drawCities(){/* replaced by canvas */}
-
-function drawCitiesCanvas(ctx){
-  const sc=curT.k;
-  // Only show city labels when zoomed in enough
-  const showLabels=sc>2;
-  const showSmall=sc>1.2;
-  CITIES.forEach(ci=>{
-    if(!ci.lat||!ci.lng)return;
-    const xy=getScreenXY(ci.lat,ci.lng);
-    if(!xy)return;
-    const [x,y]=xy;
-    if(x<-30||x>window.innerWidth+30||y<-30||y>window.innerHeight+30)return;
-    const cap=ci.capital,mine=ci.country_id===COUNTRY?.id;
-    if(!cap&&!mine&&!showSmall)return; // Only show non-capital cities when zoomed
-    const r=cap?4.5:2.5;
+function drawCities(){
+  if(!ROOT||!proj)return;
+  const layer=ROOT.select('#cityg');
+  layer.selectAll('*').remove();
+  CITIES.forEach(c=>{
+    if(!c.lat||!c.lng)return;
+    const xy=proj([c.lng,c.lat]); if(!xy)return;
+    const cap=c.capital, mine=c.country_id===COUNTRY?.id;
+    const g=layer.append('g').attr('class','city-g')
+      .attr('transform',`translate(${xy[0]},${xy[1]}) scale(${1/K})`)
+      .style('cursor','pointer')
+      .datum({_xy:xy});
+    g.on('click',e=>{ e.stopPropagation(); if(!moveMode) openPanel('city',c); });
     // Dot
-    ctx.beginPath();
-    ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fillStyle=cap?(mine?'#C9A84C':'#d4c89a'):'rgba(255,255,255,.5)';
-    ctx.fill();
+    g.append('circle').attr('r',cap?5:3)
+      .attr('fill',cap?(mine?'#C9A84C':'#c8b87a'):'rgba(255,255,255,.55)')
+      .attr('stroke',cap?(mine?'rgba(201,168,76,.9)':'rgba(200,180,120,.5)'):'rgba(255,255,255,.2)')
+      .attr('stroke-width',cap?1.5:.5);
     if(cap){
-      ctx.strokeStyle=mine?'rgba(201,168,76,.8)':'rgba(200,185,130,.5)';
-      ctx.lineWidth=1.5;
-      ctx.stroke();
-      // White inner dot
-      ctx.beginPath();
-      ctx.arc(x,y,1.5,0,Math.PI*2);
-      ctx.fillStyle='white';
-      ctx.fill();
+      g.append('circle').attr('r',1.8).attr('fill','white').attr('opacity',.9);
     }
     // Label
-    if(showLabels||(cap&&sc>0.9)||(mine&&sc>1.2)){
-      const fs=cap?9:7;
-      ctx.font=`${fs}px "Share Tech Mono"`;
-      ctx.textAlign='left';
-      // Shadow for readability
-      ctx.fillStyle='rgba(0,0,0,.7)';
-      ctx.fillText(ci.name,x+6+1,y+3+1);
-      ctx.fillStyle=cap&&mine?'#C9A84C':cap?'rgba(210,195,145,.85)':'rgba(180,170,150,.7)';
-      ctx.fillText(ci.name,x+6,y+3);
+    if(mine||cap){
+      // Shadow
+      g.append('text').attr('x',7).attr('y',4)
+        .attr('font-family','Share Tech Mono').attr('font-size',cap?9:7.5)
+        .attr('fill','rgba(0,0,0,.7)').text(c.name)
+        .attr('dx','0.5').attr('dy','0.5').style('pointer-events','none');
+      g.append('text').attr('x',7).attr('y',4)
+        .attr('font-family','Share Tech Mono').attr('font-size',cap?9:7.5)
+        .attr('fill',cap&&mine?'#C9A84C':cap?'rgba(210,190,140,.85)':'rgba(180,170,150,.75)')
+        .text(c.name).style('pointer-events','none');
     }
   });
 }
 
+function drawUnits(){
+  if(!ROOT||!proj)return;
+  const layer=ROOT.select('#units');
+  layer.selectAll('*').remove();
+  UNITS.forEach(u=>placeUnit(u,layer));
+}
+
+function placeUnit(u,layer){
+  if(!u.lat&&!u.lng)return;
+  const xy=proj([u.lng||0,u.lat||0]); if(!xy)return;
+  const vis=UVIS[u.type]||{label:u.type,color:'#1a1a3a',border:'#5050a0',sym:'??'};
+  const isSel=selUnit?.id===u.id;
+  const isM=u.status==='moving', isA=u.status==='attacking';
+  const UW=40,UH=26;
+
+  const g=layer.append('g').attr('class','unit-g')
+    .attr('transform',`translate(${xy[0]},${xy[1]}) scale(${1/K})`)
+    .attr('data-uid',u.id)
+    .datum({_xy:xy})
+    .style('cursor','pointer')
+    .on('click',e=>{ e.stopPropagation(); selectUnit(u.id); });
+
+  // Pulse ring for moving
+  if(isM){
+    g.append('circle').attr('r',24)
+      .attr('fill','none').attr('stroke','rgba(41,128,185,.4)').attr('stroke-width',1.5)
+      .attr('class','pulse-ring');
+  }
+  // Selection halo
+  if(isSel){
+    g.append('rect').attr('x',-UW/2-4).attr('y',-UH/2-4).attr('width',UW+8).attr('height',UH+8)
+      .attr('fill','none').attr('stroke','#C9A84C').attr('stroke-width',2).attr('rx',4).attr('opacity',.9);
+  }
+  // Card
+  g.append('rect').attr('x',-UW/2).attr('y',-UH/2).attr('width',UW).attr('height',UH)
+    .attr('rx',3).attr('fill',vis.color)
+    .attr('stroke',isA?'#C0392B':isM?'#2980B9':(isSel?'#C9A84C':vis.border))
+    .attr('stroke-width',isSel?2:1.3).attr('opacity',.93);
+  // Top strip
+  g.append('rect').attr('x',-UW/2).attr('y',-UH/2).attr('width',UW).attr('height',5)
+    .attr('rx',3).attr('fill',isA?'#C0392B':isM?'#2980B9':vis.border).attr('opacity',.8);
+  // Symbol
+  g.append('text').attr('text-anchor','middle').attr('dominant-baseline','central')
+    .attr('y',-2).attr('font-family','Share Tech Mono').attr('font-size',9)
+    .attr('font-weight','bold').attr('fill','white').text(vis.sym);
+  // Size
+  g.append('text').attr('text-anchor','middle').attr('y',UH/2-4)
+    .attr('font-family','Share Tech Mono').attr('font-size',5.5)
+    .attr('fill','rgba(255,255,255,.75)')
+    .text(u.size>999?Math.round(u.size/1000)+'k':u.size);
+  // Status icon
+  if(isM) g.append('text').attr('x',UW/2+2).attr('y',3).attr('font-size',10).attr('fill','#3a8fd4').text('▶');
+  if(isA) g.append('text').attr('x',UW/2+2).attr('y',3).attr('font-size',10).attr('fill','#e74c3c').text('⚔');
+}
+
+const UVIS={
+  infantry: {label:'Infantry Btn.',sym:'INF',color:'#1e4020',border:'#4a9a4a'},
+  tank:     {label:'Armored Div.', sym:'ARM',color:'#4a2e0a',border:'#c07818'},
+  artillery:{label:'Artillery Rgt.',sym:'ART',color:'#2d1a40',border:'#7a50b0'},
+  fighter:  {label:'Fighter Sqdn.',sym:'FTR',color:'#0a2050',border:'#2a70d0'},
+  bomber:   {label:'Bomber Wing',  sym:'BMB',color:'#4a1010',border:'#c03030'},
+  drone:    {label:'Drone Sqdn.', sym:'UAV',color:'#0a3030',border:'#209090'},
+  destroyer:{label:'Destroyer Flt.',sym:'DST',color:'#0a1a40',border:'#2050b0'},
+  submarine:{label:'Submarine Plt.',sym:'SUB',color:'#101035',border:'#4040a0'},
+  missile:  {label:'Missile Bty.', sym:'MSL',color:'#350a0a',border:'#a02020'},
+};
+
 function drawRoads(){
-  if(!ROOT)return;
-  // Roads drawn in SVG so they zoom with the map naturally
-  ROOT.select('.rlayer').selectAll('*').remove();
-  const rl=ROOT.select('.rlayer');
+  if(!ROOT||!proj)return;
+  const layer=ROOT.select('#roads');
+  layer.selectAll('*').remove();
   UNITS.filter(u=>u.status==='moving'&&u.target_province).forEach(u=>{
     const tp=PROVINCES.find(p=>p.id===u.target_province);
-    if(!tp||!tp.lat||!tp.lng)return;
-    const fromLng=u.lng||tp.lng,fromLat=u.lat||tp.lat;
-    const p1=proj([fromLng,fromLat]),p2=proj([tp.lng,tp.lat]);
+    if(!tp||!tp.lat||!tp.lng||!u.lat||!u.lng)return;
+    const p1=proj([u.lng,u.lat]), p2=proj([tp.lng,tp.lat]);
     if(!p1||!p2)return;
     const [x1,y1]=p1,[x2,y2]=p2;
     // Shadow
-    rl.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
-      .attr('stroke','rgba(0,0,0,.5)').attr('stroke-width',3);
-    // Animated dashes
-    rl.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
-      .attr('stroke','#C9A84C').attr('stroke-width',1.5).attr('class','road-anim').attr('opacity',.7);
-    // Midpoint arrow
+    layer.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
+      .attr('stroke','rgba(0,0,0,.6)').attr('stroke-width',3);
+    // Animated road
+    layer.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
+      .attr('stroke','#C9A84C').attr('stroke-width',1.8)
+      .attr('stroke-dasharray','6,4')
+      .attr('class','road-dash').attr('opacity',.8);
+    // Arrow at 60% toward target
+    const ax=x1+(x2-x1)*0.6, ay=y1+(y2-y1)*0.6;
     const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
-    const mx=(x1+x2)/2,my=(y1+y2)/2;
-    rl.append('polygon').attr('points','0,-4 9,0 0,4')
+    layer.append('polygon').attr('points','0,-5 10,0 0,5')
       .attr('fill','rgba(201,168,76,.9)')
-      .attr('transform',`translate(${mx},${my}) rotate(${ang})`);
-    // Target ring
-    rl.append('circle').attr('cx',x2).attr('cy',y2).attr('r',5)
-      .attr('fill','none').attr('stroke','rgba(201,168,76,.6)').attr('stroke-width',1.2)
+      .attr('transform',`translate(${ax},${ay}) rotate(${ang})`);
+    // Target ring at destination
+    layer.append('circle').attr('cx',x2).attr('cy',y2).attr('r',6)
+      .attr('fill','none').attr('stroke','rgba(201,168,76,.5)').attr('stroke-width',1.2)
       .attr('stroke-dasharray','3,2');
   });
 }
 
-// Unit visual config
-const UNIT_VISUAL={
-  infantry:   {label:'Infantry Btn.',  color:'#2d5a2d',border:'#5ab85a',symbol:'INF'},
-  tank:       {label:'Armored Div.',   color:'#5a3a10',border:'#c87820',symbol:'ARM'},
-  artillery:  {label:'Artillery Rgt.', color:'#3a2050',border:'#8050a0',symbol:'ART'},
-  fighter:    {label:'Fighter Sqdn.',  color:'#0d3060',border:'#2a7fd4',symbol:'FTR'},
-  bomber:     {label:'Bomber Wing',    color:'#5a1510',border:'#c03030',symbol:'BMB'},
-  drone:      {label:'Drone Sqdn.',    color:'#0a3a3a',border:'#20a0a0',symbol:'UAV'},
-  destroyer:  {label:'Destroyer Flt.', color:'#0d2550',border:'#2050a0',symbol:'DST'},
-  submarine:  {label:'Submarine Plt.', color:'#151540',border:'#4040a0',symbol:'SUB'},
-  missile:    {label:'Missile Bty.',   color:'#401010',border:'#a02020',symbol:'MSL'},
-};
-
-// Store unit coords for click detection
-let unitHitboxes=[];
-
-function drawUnits(){/* replaced by canvas */}
-
-function drawUnitsCanvas(ctx){
-  unitHitboxes=[];
-  const UW=36,UH=22; // fixed screen-space size regardless of zoom
-  UNITS.forEach(u=>{
-    if(!u.lat&&!u.lng)return;
-    const xy=getScreenXY(u.lat,u.lng);
-    if(!xy)return;
-    const [cx,cy]=xy;
-    if(cx<-50||cx>window.innerWidth+50||cy<-50||cy>window.innerHeight+50)return;
-    const vis=UNIT_VISUAL[u.type]||{label:u.type,color:'#1a1a3a',border:'#5050a0',symbol:'??'};
-    const isSel=selUnit?.id===u.id;
-    const isM=u.status==='moving';
-    const isA=u.status==='attacking';
-    const x=cx-UW/2,y=cy-UH/2;
-    // Store hitbox
-    unitHitboxes.push({id:u.id,x,y,w:UW,h:UH});
-    // Pulse ring for moving (drawn before card)
-    if(isM){
-      const t=(Date.now()%2000)/2000;
-      const pr=16+t*12;
-      ctx.beginPath();
-      ctx.arc(cx,cy,pr,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(41,128,185,${0.5*(1-t)})`;
-      ctx.lineWidth=1.5;
-      ctx.stroke();
-    }
-    // Selection ring
-    if(isSel){
-      ctx.beginPath();
-      ctx.arc(cx,cy,UW/2+4,0,Math.PI*2);
-      ctx.strokeStyle='#C9A84C';
-      ctx.lineWidth=2;
-      ctx.stroke();
-    }
-    // Card shadow
-    ctx.shadowColor='rgba(0,0,0,.6)';
-    ctx.shadowBlur=6;
-    // Card background
-    roundRect(ctx,x,y,UW,UH,3);
-    ctx.fillStyle=vis.color;
-    ctx.fill();
-    ctx.strokeStyle=isA?'#C0392B':isM?'#2980B9':(isSel?'#C9A84C':vis.border);
-    ctx.lineWidth=isSel?2:1.2;
-    ctx.stroke();
-    ctx.shadowBlur=0;
-    // Top color strip
-    roundRect(ctx,x,y,UW,5,3);
-    ctx.fillStyle=isA?'#C0392B':isM?'#2980B9':vis.border;
-    ctx.globalAlpha=0.8;
-    ctx.fill();
-    ctx.globalAlpha=1;
-    // Symbol
-    ctx.fillStyle='white';
-    ctx.font='bold 8px "Share Tech Mono"';
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillText(vis.symbol,cx,cy-2);
-    // Size
-    ctx.fillStyle='rgba(255,255,255,.7)';
-    ctx.font='5px "Share Tech Mono"';
-    ctx.fillText(u.size>999?Math.round(u.size/1000)+'k':u.size,cx,cy+UH/2-3);
-    // Moving arrow
-    if(isM){
-      ctx.fillStyle='#3a8fd4';
-      ctx.font='9px sans-serif';
-      ctx.textAlign='left';
-      ctx.fillText('►',cx+UW/2+2,cy+3);
-    }
-    if(isA){
-      ctx.fillStyle='#C0392B';
-      ctx.font='9px sans-serif';
-      ctx.textAlign='left';
-      ctx.fillText('⚔',cx+UW/2+2,cy+3);
-    }
-    ctx.textAlign='start';
-    ctx.textBaseline='alphabetic';
-  });
-}
-
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.lineTo(x+w-r,y);
-  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r);
-  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h);
-  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r);
-  ctx.quadraticCurveTo(x,y,x+r,y);
-  ctx.closePath();
-}
-
-// ── UNIT MOVEMENT ─────────────────────────────────────────────────────────────
+// ── UNIT SELECTION & MOVEMENT ─────────────────────────────────────────────────
 function selectUnit(id){
   selUnit=UNITS.find(u=>u.id===id);
   drawUnits();
   openPanel('unit',selUnit);
 }
 
-function enableMoveMode(){
-  moveMode=true;
-  document.getElementById('movebanner').classList.add('show');
-  document.getElementById('mapsvg').style.cursor='crosshair';
-  renderCanvas();
-}
-function disableMoveMode(){
-  moveMode=false;selUnit=null;
-  document.getElementById('movebanner').classList.remove('show');
-  document.getElementById('mapsvg').style.cursor='';
-  renderCanvas();
+function startMove(unitId){
+  selUnit=UNITS.find(u=>u.id===unitId);
+  if(!selUnit){toast('Unit not found','err');return;}
+  closePanel();
+  setTimeout(()=>{ moveMode=true; showMoveBanner(); drawUnits(); },150);
 }
 
-function pickMoveTarget(event){
+function showMoveBanner(){
+  document.getElementById('movebanner').classList.add('show');
+  document.getElementById('mapsvg').style.cursor='crosshair';
+}
+
+function cancelMove(){
+  moveMode=false; selUnit=null;
+  document.getElementById('movebanner').classList.remove('show');
+  document.getElementById('mapsvg').style.cursor='';
+  drawUnits();
+}
+
+function mapClick(event){
   if(!moveMode||!selUnit)return;
-  const pt=curT.invert([event.offsetX,event.offsetY]);
-  const inv=proj.invert(pt);
-  if(!inv){disableMoveMode();return;}
-  const [lng,lat]=inv;
-  let best=null,bestD=Infinity;
+  // Convert click coords to map coords via inverse projection
+  const [ex,ey]=[event.offsetX,event.offsetY];
+  const t=d3.zoomTransform(document.getElementById('mapsvg'));
+  const [mx,my]=t.invert([ex,ey]);
+  const geo=proj.invert([mx,my]);
+  if(!geo){cancelMove();return;}
+  // Find nearest province to click
+  let best=null, bestD=Infinity;
   PROVINCES.forEach(p=>{
     if(!p.lat||!p.lng)return;
-    const d=Math.hypot(p.lat-lat,p.lng-lng);
+    const d=Math.hypot(p.lat-geo[1], p.lng-geo[0]);
     if(d<bestD){bestD=d;best=p;}
   });
-  if(best&&selUnit){doMove(selUnit,best.id);disableMoveMode();}
+  if(best) orderMove(best.id);
+  else cancelMove();
+}
+
+function orderMove(provId){
+  if(!selUnit)return;
+  const u=selUnit;
+  cancelMove();
+  doMove(u,provId);
 }
 
 async function doMove(unit,targetProvId){
   const tp=PROVINCES.find(p=>p.id===targetProvId);
   if(!tp)return;
   const speed=(USPEEDS[unit.type]||5)*SPEED_MUL;
-  const fromLat=unit.lat||tp.lat,fromLng=unit.lng||tp.lng;
+  const fromLat=unit.lat||tp.lat, fromLng=unit.lng||tp.lng;
   const dist=Math.hypot((fromLat-tp.lat)*111,(fromLng-tp.lng)*85);
   const ms=Math.max(30000,(dist/speed)*3600000);
   const endsAt=new Date(Date.now()+ms).toISOString();
   const etaMin=Math.round(ms/60000);
-  await SB.from('units').update({status:'moving',target_province:targetProvId,move_started_at:new Date().toISOString(),move_ends_at:endsAt,updated_at:new Date().toISOString()}).eq('id',unit.id);
-  await SB.from('news').insert({headline:`${COUNTRY.flag} ${UICONS[unit.type]||'⚔️'} unit moving to ${tp.name}. ETA ${etaMin}min.`,category:'general',country_id:COUNTRY.id});
+  await SB.from('units').update({
+    status:'moving',target_province:targetProvId,
+    move_started_at:new Date().toISOString(),
+    move_ends_at:endsAt,updated_at:new Date().toISOString()
+  }).eq('id',unit.id);
+  await SB.from('news').insert({
+    headline:`${COUNTRY.flag} ${UVIS[unit.type]?.sym||'?'} unit moving to ${tp.name}. ETA ${etaMin}min.`,
+    category:'general',country_id:COUNTRY.id
+  });
   const idx=UNITS.findIndex(u=>u.id===unit.id);
-  if(idx>=0)UNITS[idx]={...UNITS[idx],status:'moving',target_province:targetProvId,move_ends_at:endsAt};
-  toast(`Moving to ${tp.name} — ETA ${etaMin}min`,'ok');
-  closePanel();
-  drawRoads(); // SVG roads
-  renderCanvas(); // canvas units
+  if(idx>=0) UNITS[idx]={...UNITS[idx],status:'moving',target_province:targetProvId,move_ends_at:endsAt};
+  toast(`→ ${tp.name} · ETA ${etaMin}min`,'ok');
+  drawRoads(); drawUnits();
 }
 
+// Smooth unit animation — interpolate position each tick
 function animateUnits(){
   if(!proj||!ROOT)return;
-  renderCanvas();
-  let changed=false;
+  let dirty=false;
+  const now=Date.now();
   UNITS.forEach(u=>{
     if(u.status!=='moving'||!u.target_province||!u.move_started_at||!u.move_ends_at)return;
     const tp=PROVINCES.find(p=>p.id===u.target_province);
     if(!tp||!tp.lat||!tp.lng)return;
     const start=new Date(u.move_started_at).getTime();
     const end=new Date(u.move_ends_at).getTime();
-    const now=Date.now();
-    if(now>=end){
+    const t=Math.min(1,Math.max(0,(now-start)/(end-start)));
+    const sLat=u._startLat||u.lat||tp.lat;
+    const sLng=u._startLng||u.lng||tp.lng;
+    if(!u._startLat){ u._startLat=sLat; u._startLng=sLng; }
+    const curLat=sLat+(tp.lat-sLat)*t;
+    const curLng=sLng+(tp.lng-sLng)*t;
+    u.lat=curLat; u.lng=curLng;
+    if(t>=1){
       // Arrived
-      const idx=UNITS.findIndex(x=>x.id===u.id);
-      if(idx>=0){
-        UNITS[idx]={...UNITS[idx],status:'idle',province_id:u.target_province,lat:tp.lat,lng:tp.lng,target_province:null,move_started_at:null,move_ends_at:null};
-        SB.from('units').update({status:'idle',province_id:u.target_province,target_province:null,move_started_at:null,move_ends_at:null,lat:tp.lat,lng:tp.lng,updated_at:new Date().toISOString()}).eq('id',u.id);
-        toast(`${UICONS[u.type]||'⚔️'} arrived at ${tp.name}`,'ok');
-        drawRoads();
-        changed=true;
-      }
-    } else {
-      const t=(now-start)/(end-start);
-      const curLat=u.lat+(tp.lat-u.lat)*t;
-      const curLng=u.lng+(tp.lng-u.lng)*t;
-      // Smooth visual update
-      const idx=UNITS.findIndex(x=>x.id===u.id);
-      if(idx>=0){UNITS[idx]={...UNITS[idx],lat:curLat,lng:curLng};changed=true;}
+      u.status='idle'; u.province_id=tp.id;
+      u.lat=tp.lat; u.lng=tp.lng;
+      delete u._startLat; delete u._startLng;
+      SB.from('units').update({
+        status:'idle',province_id:tp.id,target_province:null,
+        move_started_at:null,move_ends_at:null,
+        lat:tp.lat,lng:tp.lng,updated_at:new Date().toISOString()
+      }).eq('id',u.id);
+      toast(`${UVIS[u.type]?.sym||'?'} arrived at ${tp.name}`,'ok');
+      dirty=true;
+    }
+    // Update SVG position smoothly
+    const xy=proj([curLng,curLat]);
+    if(xy){
+      ROOT.select(`[data-uid="${u.id}"]`)
+        .datum(d=>{d._xy=xy;return d;})
+        .attr('transform',`translate(${xy[0]},${xy[1]}) scale(${1/K})`);
     }
   });
-  if(changed){drawRoads();drawUnits();}
+  if(dirty){drawRoads();drawUnits();}
+}
+
+function mzoom(f){if(svg&&ZOOM)svg.transition().duration(250).call(ZOOM.scaleBy,f);}
+function mreset(){
+  if(!svg||!ZOOM||!proj)return;
+  // Zoom to show all of Europe (Czech Republic area)
+  svg.transition().duration(600).call(ZOOM.transform,d3.zoomIdentity);
+}
+function zoomTo(lat,lng){
+  if(!svg||!ZOOM||!proj)return;
+  const W=window.innerWidth,H=window.innerHeight;
+  const [x,y]=proj([lng,lat]);
+  svg.transition().duration(700).call(
+    ZOOM.transform,
+    d3.zoomIdentity.translate(W/2-6*x, H/2-6*y).scale(6)
+  );
+}
+
+// Add SVG click handler for move mode (on map body)
+function setupMapClick(){
+  d3.select('#mapsvg').on('click.movemap',function(e){
+    if(moveMode&&selUnit) mapClick(e);
+  });
+}
+
+
+
 }
 
 // ── PANEL SYSTEM ──────────────────────────────────────────────────────────────
@@ -955,14 +884,14 @@ function cityHTML(c){
 function unitHTML(u){
   if(!u)return'';
   const def=UDEFS[u.type]||{icon:'⚔️',name:u.type,speed:5};
-  const vis=UNIT_VISUAL[u.type]||{label:u.type,symbol:'??'};
+  const vis=UVIS[u.type]||{label:u.type,sym:'??'};
   const prov=PROVINCES.find(p=>p.id===u.province_id);
   const tp=PROVINCES.find(p=>p.id===u.target_province);
   const isM=u.status==='moving';
   const eta=isM&&u.move_ends_at?Math.max(0,Math.round((new Date(u.move_ends_at)-Date.now())/60000)):0;
   return`<div style="text-align:center;margin-bottom:.9rem">
     <div style="font-size:2.8rem">${def.icon||UICONS[u.type]||'⚔️'}</div>
-    <div class="ptitle" style="margin-bottom:.1rem">${vis.label||def.name}</div>
+    <div class="ptitle" style="margin-bottom:.1rem">${(vis&&vis.label)||def.name}</div>
     <div class="psub">${prov?.name||'In transit'}</div>
   </div>
   ${sr('Size',u.size.toLocaleString())}${sr('Health',u.health+'%',u.health>60?'g':u.health>30?'w':'r')}
@@ -1137,7 +1066,7 @@ async function confirmAttack(unitId){
 async function disband(unitId){
   await SB.from('units').delete().eq('id',unitId);
   UNITS=UNITS.filter(x=>x.id!==unitId);
-  closePanel();toast('Unit disbanded','ok');drawUnits();
+  closePanel();toast('Unit disbanded','ok');drawUnits();drawRoads();
 }
 
 async function doBuild(type){
@@ -1175,7 +1104,7 @@ async function doMob(type){
   await SB.from('units').insert({country_id:COUNTRY.id,province_id:provId,type,size:sizes[type]||100,health:100,morale:80,status:'idle',lat:p?.lat,lng:p?.lng});
   RES={...RES,...upd};renderResBar();
   const {data:units}=await SB.from('units').select('*').eq('country_id',COUNTRY.id);
-  UNITS=units||[];drawUnits();
+  UNITS=units||[];drawUnits();drawRoads();
   toast(`${def.name} deployed in ${p?.name}!`,'ok');
 }
 
@@ -1316,11 +1245,11 @@ function setMode(mode,el){
   mapMode=mode;
   document.querySelectorAll('.tb').forEach(b=>{if(['🎨 Political','🏛 Regime','⚡ Power'].some(t=>b.textContent.includes(t.split(' ')[1])))b.classList.remove('on');});
   if(el)el.classList.add('on');
-  if(ROOT)ROOT.selectAll('.clayer path').attr('fill',d=>{const i=iso3(d.id);const c=i?COUNTRIES.find(x=>x.id===i):null;return c?ccolor(c):'#0e1e33';});
+  if(ROOT)ROOT.selectAll('.clayer path').attr('fill',d=>{const i=iso3(d.id);const c=i?COUNTRIES.find(x=>x.id===i):null;return c?ccolor(c):'#0d1b2e';});
 }
 
-function mzoom(f){if(svg&&zoomB)svg.transition().duration(250).call(zoomB.scaleBy,f);}
-function mreset(){if(svg&&zoomB)svg.transition().duration(380).call(zoomB.transform,d3.zoomIdentity);}
+// mzoom defined in new map engine
+// mreset defined in new map engine
 
 function calcDom(c){
   const tg=COUNTRIES.reduce((s,x)=>s+x.gdp,0)||1;
