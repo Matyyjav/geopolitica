@@ -50,7 +50,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);color:va
 .rr{color:var(--green);font-size:.48rem;}
 
 /* SIDE PANEL */
-#panel{position:absolute;top:46px;right:0;bottom:36px;width:330px;background:rgba(7,9,15,.95);border-left:1px solid var(--border);z-index:190;overflow-y:auto;transform:translateX(100%);transition:transform .25s ease;backdrop-filter:blur(14px);}
+#panel{position:absolute;top:46px;right:0;bottom:36px;width:340px;background:rgba(7,9,15,.96);border-left:1px solid var(--border);z-index:150;overflow-y:auto;transform:translateX(100%);transition:transform .25s ease;backdrop-filter:blur(14px);}
 #panel.open{transform:translateX(0);}
 #pcontent{padding:1.1rem;}
 .pclose{position:absolute;top:.6rem;right:.6rem;background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem;z-index:10;}
@@ -81,7 +81,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);color:va
 @keyframes tick{to{transform:translateX(-200vw)}}
 
 /* MOVE MODE BANNER */
-#movebanner{position:absolute;top:56px;left:50%;transform:translateX(-50%);background:rgba(41,128,185,.15);border:1px solid rgba(41,128,185,.5);padding:.5rem 1.5rem;font-family:var(--mono);font-size:.65rem;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;z-index:300;display:none;}
+#movebanner{position:absolute;top:56px;left:50%;transform:translateX(-50%);background:rgba(7,9,15,.92);border:1px solid rgba(41,128,185,.7);padding:.5rem 1.5rem;font-family:var(--mono);font-size:.65rem;color:#5ab0f0;letter-spacing:.1em;text-transform:uppercase;z-index:500;display:none;box-shadow:0 0 20px rgba(41,128,185,.3);}
 #movebanner.show{display:block;}
 
 /* MODAL */
@@ -174,6 +174,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);color:va
 <!-- GAME -->
 <div id="game">
   <svg id="mapsvg"></svg>
+  <canvas id="overlay" style="position:absolute;top:46px;left:0;right:0;bottom:36px;pointer-events:auto;z-index:10;cursor:default"></canvas>
 
   <div id="topbar">
     <span class="tb-brand">GEOPOLITICA</span>
@@ -394,7 +395,71 @@ async function showGame(){
   buildMap();
   loadTicker();
   setInterval(gameTick,60000);
-  setInterval(animateUnits,1500);
+  setInterval(animateUnits,800); // faster animation = smoother unit movement
+  // Canvas click handler — intercepts clicks on units, provinces, cities
+  const canvas=document.getElementById('overlay');
+  canvas.addEventListener('click',handleCanvasClick);
+  canvas.addEventListener('mousemove',handleCanvasHover);
+}
+
+function handleCanvasClick(e){
+  const rect=e.currentTarget.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  // If panel is open, ignore clicks in panel area
+  const panel=document.getElementById('panel');
+  if(panel.classList.contains('open')&&mx>window.innerWidth-350)return;
+  // Check unit hitboxes first
+  for(const h of unitHitboxes){
+    if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h){
+      selectUnit(h.id);
+      return;
+    }
+  }
+  // Move mode - click anywhere to move to nearest province
+  if(moveMode&&selUnit){
+    // Convert canvas click to map coordinates
+    const pt=curT.invert([mx,my]);
+    const inv=proj.invert(pt);
+    if(inv){
+      const [lng,lat]=inv;
+      let best=null,bestD=Infinity;
+      PROVINCES.forEach(p=>{
+        if(!p.lat||!p.lng)return;
+        const d=Math.hypot(p.lat-lat,p.lng-lng);
+        if(d<bestD){bestD=d;best=p;}
+      });
+      if(best){doMove(selUnit,best.id);disableMoveMode();return;}
+    }
+  }
+  // Check province dots
+  for(const p of PROVINCES){
+    if(!p.lat||!p.lng)continue;
+    const xy=getScreenXY(p.lat,p.lng);
+    if(!xy)continue;
+    const d=Math.hypot(mx-xy[0],my-xy[1]);
+    if(d<8){openPanel('province',p);return;}
+  }
+  // Check city dots
+  for(const ci of CITIES){
+    if(!ci.lat||!ci.lng)continue;
+    const xy=getScreenXY(ci.lat,ci.lng);
+    if(!xy)continue;
+    const d=Math.hypot(mx-xy[0],my-xy[1]);
+    if(d<10){openPanel('city',ci);return;}
+  }
+}
+
+function handleCanvasHover(e){
+  const rect=e.currentTarget.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  let cursor='default';
+  if(moveMode){cursor='crosshair';}
+  else{
+    for(const h of unitHitboxes){
+      if(mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h){cursor='pointer';break;}
+    }
+  }
+  e.currentTarget.style.cursor=cursor;
 }
 
 async function loadAll(){
@@ -417,6 +482,8 @@ async function loadAll(){
     renderResBar();
   }
   renderLB();
+  // Render canvas overlays if map already loaded
+  if(proj)renderCanvas();
 }
 
 // ── MAP ───────────────────────────────────────────────────────────────────────
@@ -451,16 +518,14 @@ function buildMap(){
           if(i)openPanel('country',COUNTRIES.find(x=>x.id===i));
         });
       ROOT.append('path').datum(mesh).attr('d',gpath).attr('fill','none').attr('stroke','rgba(255,255,255,.1)').attr('stroke-width',.3);
-      // Overlay layers (all children of ROOT so zoom applies automatically)
+      // Only roads layer in SVG (zooms with map), rest on canvas
       ROOT.append('g').attr('class','rlayer');
-      ROOT.append('g').attr('class','player');
-      ROOT.append('g').attr('class','citylayer');
-      ROOT.append('g').attr('class','ulayer');
       drawOverlays();
       // Zoom
       const zoom=d3.zoom().scaleExtent([.5,16]).on('zoom',e=>{
         ROOT.attr('transform',e.transform);
         curT=e.transform;
+        renderCanvas(); // redraw canvas overlays at new zoom level
       });
       svg.call(zoom);
       zoomB=zoom;
@@ -480,172 +545,244 @@ function buildMap(){
 
 function drawOverlays(){
   if(!ROOT)return;
-  drawProvinces();
-  drawCities();
+  // Overlay layers still in ROOT for roads (dashed lines look better in SVG)
+  // but units, cities, provinces drawn on canvas for scale-independence
   drawRoads();
-  drawUnits();
+  renderCanvas();
 }
 
-function drawProvinces(){
-  if(!ROOT)return;
-  ROOT.select('.player').selectAll('*').remove();
-  const pl=ROOT.select('.player');
+function getScreenXY(lat,lng){
+  if(!proj||!curT)return null;
+  const mp=proj([lng,lat]);
+  if(!mp)return null;
+  return [curT.applyX(mp[0]), curT.applyY(mp[1])];
+}
+
+function renderCanvas(){
+  const canvas=document.getElementById('overlay');
+  if(!canvas||!proj)return;
+  const W=window.innerWidth,H=window.innerHeight-82; // minus topbar+resbar
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  drawProvincesCanvas(ctx);
+  drawCitiesCanvas(ctx);
+  drawUnitsCanvas(ctx);
+}
+
+function drawProvinces(){/* replaced by canvas */}
+
+function drawProvincesCanvas(ctx){
+  const sc=curT.k;
   PROVINCES.forEach(p=>{
     if(!p.lat||!p.lng)return;
-    const xy=proj([p.lng,p.lat]);if(!xy||!xy[0])return;
+    const xy=getScreenXY(p.lat,p.lng);
+    if(!xy)return;
     const [x,y]=xy;
+    if(x<-20||x>window.innerWidth+20||y<-20||y>window.innerHeight)return;
     const mine=p.country_id===COUNTRY?.id;
-    const r=mine?6:4;
-    const g=pl.append('g').style('cursor','pointer')
-      .on('click',ev=>{ev.stopPropagation();if(moveMode&&selUnit){doMove(selUnit,p.id);disableMoveMode();return;}openPanel('province',p);});
-    g.append('circle').attr('cx',x).attr('cy',y).attr('r',r)
-      .attr('fill',mine?'rgba(201,168,76,.18)':'rgba(255,255,255,.05)')
-      .attr('stroke',mine?'rgba(201,168,76,.9)':'rgba(255,255,255,.18)')
-      .attr('stroke-width',mine?1.5:0.8);
-    // Capital star
+    const r=mine?5:3;
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=mine?'rgba(201,168,76,.2)':'rgba(255,255,255,.06)';
+    ctx.fill();
+    ctx.strokeStyle=mine?'rgba(201,168,76,.85)':'rgba(255,255,255,.2)';
+    ctx.lineWidth=mine?1.5:0.8;
+    ctx.stroke();
     if(p.capital){
-      g.append('text').attr('x',x).attr('y',y+4).attr('text-anchor','middle')
-        .attr('font-size','7px').text('★').attr('fill',mine?'#C9A84C':'rgba(255,255,255,.5)')
-        .style('pointer-events','none');
+      ctx.fillStyle=mine?'#C9A84C':'rgba(255,255,255,.4)';
+      ctx.font='8px serif';
+      ctx.textAlign='center';
+      ctx.fillText('★',x,y+3);
     }
   });
 }
 
-function drawCities(){
-  if(!ROOT)return;
-  ROOT.select('.citylayer').selectAll('*').remove();
-  const cl=ROOT.select('.citylayer');
-  CITIES.forEach(c=>{
-    if(!c.lat||!c.lng)return;
-    const xy=proj([c.lng,c.lat]);if(!xy||!xy[0])return;
+function drawCities(){/* replaced by canvas */}
+
+function drawCitiesCanvas(ctx){
+  const sc=curT.k;
+  // Only show city labels when zoomed in enough
+  const showLabels=sc>2;
+  const showSmall=sc>1.2;
+  CITIES.forEach(ci=>{
+    if(!ci.lat||!ci.lng)return;
+    const xy=getScreenXY(ci.lat,ci.lng);
+    if(!xy)return;
     const [x,y]=xy;
-    const cap=c.capital,mine=c.country_id===COUNTRY?.id;
-    const r=cap?5:3;
-    const g=cl.append('g').style('cursor','pointer')
-      .on('click',ev=>{ev.stopPropagation();if(moveMode&&selUnit)return;openPanel('city',c);});
-    // City dot
-    g.append('circle').attr('cx',x).attr('cy',y).attr('r',r)
-      .attr('fill',cap?(mine?'#C9A84C':'#e0d5b8'):'rgba(255,255,255,.45)')
-      .attr('stroke',cap?(mine?'rgba(201,168,76,.9)':'rgba(224,213,184,.6)'):'rgba(255,255,255,.2)')
-      .attr('stroke-width',cap?1.5:0.5);
-    // White outer dot for capitals
+    if(x<-30||x>window.innerWidth+30||y<-30||y>window.innerHeight+30)return;
+    const cap=ci.capital,mine=ci.country_id===COUNTRY?.id;
+    if(!cap&&!mine&&!showSmall)return; // Only show non-capital cities when zoomed
+    const r=cap?4.5:2.5;
+    // Dot
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=cap?(mine?'#C9A84C':'#d4c89a'):'rgba(255,255,255,.5)';
+    ctx.fill();
     if(cap){
-      g.append('circle').attr('cx',x).attr('cy',y).attr('r',2)
-        .attr('fill','white').attr('opacity',.9).style('pointer-events','none');
+      ctx.strokeStyle=mine?'rgba(201,168,76,.8)':'rgba(200,185,130,.5)';
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+      // White inner dot
+      ctx.beginPath();
+      ctx.arc(x,y,1.5,0,Math.PI*2);
+      ctx.fillStyle='white';
+      ctx.fill();
     }
-    // City name label - always show for player's cities, only capitals for others
-    if(mine||cap){
-      const fs=cap?(mine?'9px':'8px'):'7.5px';
-      const fc=cap&&mine?'#C9A84C':cap?'rgba(224,213,184,.75)':'rgba(200,190,170,.6)';
-      // Label background for readability
-      const lx=x+(cap?7:5),ly=y+3;
-      g.append('text').attr('x',lx).attr('y',ly)
-        .attr('fill',fc).attr('font-family','Share Tech Mono')
-        .attr('font-size',fs).attr('letter-spacing','.03em')
-        .text(c.name).style('pointer-events','none');
+    // Label
+    if(showLabels||(cap&&sc>0.9)||(mine&&sc>1.2)){
+      const fs=cap?9:7;
+      ctx.font=`${fs}px "Share Tech Mono"`;
+      ctx.textAlign='left';
+      // Shadow for readability
+      ctx.fillStyle='rgba(0,0,0,.7)';
+      ctx.fillText(ci.name,x+6+1,y+3+1);
+      ctx.fillStyle=cap&&mine?'#C9A84C':cap?'rgba(210,195,145,.85)':'rgba(180,170,150,.7)';
+      ctx.fillText(ci.name,x+6,y+3);
     }
   });
 }
 
 function drawRoads(){
   if(!ROOT)return;
+  // Roads drawn in SVG so they zoom with the map naturally
   ROOT.select('.rlayer').selectAll('*').remove();
   const rl=ROOT.select('.rlayer');
   UNITS.filter(u=>u.status==='moving'&&u.target_province).forEach(u=>{
     const tp=PROVINCES.find(p=>p.id===u.target_province);
     if(!tp||!tp.lat||!tp.lng)return;
-    const fromLng=u.lng||tp.lng, fromLat=u.lat||tp.lat;
-    const p1=proj([fromLng,fromLat]), p2=proj([tp.lng,tp.lat]);
+    const fromLng=u.lng||tp.lng,fromLat=u.lat||tp.lat;
+    const p1=proj([fromLng,fromLat]),p2=proj([tp.lng,tp.lat]);
     if(!p1||!p2)return;
     const [x1,y1]=p1,[x2,y2]=p2;
-    // Shadow road
+    // Shadow
     rl.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
-      .attr('stroke','rgba(0,0,0,.4)').attr('stroke-width',4);
-    // Animated dashed road
+      .attr('stroke','rgba(0,0,0,.5)').attr('stroke-width',3);
+    // Animated dashes
     rl.append('line').attr('x1',x1).attr('y1',y1).attr('x2',x2).attr('y2',y2)
-      .attr('stroke','rgba(201,168,76,.6)').attr('stroke-width',2).attr('class','road-anim');
-    // Direction arrow
+      .attr('stroke','#C9A84C').attr('stroke-width',1.5).attr('class','road-anim').attr('opacity',.7);
+    // Midpoint arrow
     const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
     const mx=(x1+x2)/2,my=(y1+y2)/2;
-    rl.append('polygon').attr('points','0,-5 12,0 0,5')
-      .attr('fill','rgba(201,168,76,.85)')
+    rl.append('polygon').attr('points','0,-4 9,0 0,4')
+      .attr('fill','rgba(201,168,76,.9)')
       .attr('transform',`translate(${mx},${my}) rotate(${ang})`);
-    // Destination marker
-    rl.append('circle').attr('cx',x2).attr('cy',y2).attr('r',6)
-      .attr('fill','none').attr('stroke','rgba(201,168,76,.5)').attr('stroke-width',1.5)
+    // Target ring
+    rl.append('circle').attr('cx',x2).attr('cy',y2).attr('r',5)
+      .attr('fill','none').attr('stroke','rgba(201,168,76,.6)').attr('stroke-width',1.2)
       .attr('stroke-dasharray','3,2');
   });
 }
 
-// Unit visual config - specific named unit types with colors
+// Unit visual config
 const UNIT_VISUAL={
-  infantry:   {label:'Infantry Btn.',    color:'#4a8c4a',border:'#6abf6a',symbol:'INF'},
-  tank:       {label:'Armored Div.',     color:'#6b4a1a',border:'#c87820',symbol:'ARM'},
-  artillery:  {label:'Artillery Rgt.',   color:'#5a3a6a',border:'#9a60b8',symbol:'ART'},
-  fighter:    {label:'Fighter Sqdn.',    color:'#1a4a7a',border:'#3a8fd4',symbol:'FTR'},
-  bomber:     {label:'Bomber Wing',      color:'#7a2a1a',border:'#d44a3a',symbol:'BMB'},
-  drone:      {label:'Drone Sqdn.',      color:'#1a5a5a',border:'#3ab8b8',symbol:'UAV'},
-  destroyer:  {label:'Destroyer Flot.',  color:'#1a3a6a',border:'#2a6ab8',symbol:'DST'},
-  submarine:  {label:'Submarine Plt.',   color:'#2a2a5a',border:'#5a5ab8',symbol:'SUB'},
-  missile:    {label:'Missile Bty.',     color:'#5a1a1a',border:'#b83a3a',symbol:'MSL'},
+  infantry:   {label:'Infantry Btn.',  color:'#2d5a2d',border:'#5ab85a',symbol:'INF'},
+  tank:       {label:'Armored Div.',   color:'#5a3a10',border:'#c87820',symbol:'ARM'},
+  artillery:  {label:'Artillery Rgt.', color:'#3a2050',border:'#8050a0',symbol:'ART'},
+  fighter:    {label:'Fighter Sqdn.',  color:'#0d3060',border:'#2a7fd4',symbol:'FTR'},
+  bomber:     {label:'Bomber Wing',    color:'#5a1510',border:'#c03030',symbol:'BMB'},
+  drone:      {label:'Drone Sqdn.',    color:'#0a3a3a',border:'#20a0a0',symbol:'UAV'},
+  destroyer:  {label:'Destroyer Flt.', color:'#0d2550',border:'#2050a0',symbol:'DST'},
+  submarine:  {label:'Submarine Plt.', color:'#151540',border:'#4040a0',symbol:'SUB'},
+  missile:    {label:'Missile Bty.',   color:'#401010',border:'#a02020',symbol:'MSL'},
 };
 
-function drawUnits(){
-  if(!ROOT)return;
-  ROOT.select('.ulayer').selectAll('*').remove();
-  const ul=ROOT.select('.ulayer');
+// Store unit coords for click detection
+let unitHitboxes=[];
+
+function drawUnits(){/* replaced by canvas */}
+
+function drawUnitsCanvas(ctx){
+  unitHitboxes=[];
+  const UW=36,UH=22; // fixed screen-space size regardless of zoom
   UNITS.forEach(u=>{
     if(!u.lat&&!u.lng)return;
-    const xy=proj([u.lng||0,u.lat||0]);
-    if(!xy||!xy[0])return;
-    const [x,y]=xy;
-    const vis=UNIT_VISUAL[u.type]||{label:u.type,color:'#2a2a4a',border:'#6a6a9a',symbol:'??'};
+    const xy=getScreenXY(u.lat,u.lng);
+    if(!xy)return;
+    const [cx,cy]=xy;
+    if(cx<-50||cx>window.innerWidth+50||cy<-50||cy>window.innerHeight+50)return;
+    const vis=UNIT_VISUAL[u.type]||{label:u.type,color:'#1a1a3a',border:'#5050a0',symbol:'??'};
     const isSel=selUnit?.id===u.id;
-    const isMoving=u.status==='moving';
-    const isAtk=u.status==='attacking';
-    const W=38,H=24;
-    const g=ul.append('g').attr('transform',`translate(${x-W/2},${y-H/2})`).style('cursor','pointer')
-      .on('click',ev=>{ev.stopPropagation();selectUnit(u.id);});
-    // Pulse ring for moving
-    if(isMoving){
-      g.append('circle').attr('cx',W/2).attr('cy',H/2).attr('r',22)
-        .attr('fill','none').attr('stroke','rgba(41,128,185,.4)').attr('stroke-width',1.5)
-        .attr('class','pring');
+    const isM=u.status==='moving';
+    const isA=u.status==='attacking';
+    const x=cx-UW/2,y=cy-UH/2;
+    // Store hitbox
+    unitHitboxes.push({id:u.id,x,y,w:UW,h:UH});
+    // Pulse ring for moving (drawn before card)
+    if(isM){
+      const t=(Date.now()%2000)/2000;
+      const pr=16+t*12;
+      ctx.beginPath();
+      ctx.arc(cx,cy,pr,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(41,128,185,${0.5*(1-t)})`;
+      ctx.lineWidth=1.5;
+      ctx.stroke();
     }
-    // Selection glow
+    // Selection ring
     if(isSel){
-      g.append('rect').attr('x',-3).attr('y',-3).attr('width',W+6).attr('height',H+6)
-        .attr('fill','none').attr('stroke','#C9A84C').attr('stroke-width',2).attr('rx',3).attr('opacity',.8);
+      ctx.beginPath();
+      ctx.arc(cx,cy,UW/2+4,0,Math.PI*2);
+      ctx.strokeStyle='#C9A84C';
+      ctx.lineWidth=2;
+      ctx.stroke();
     }
-    // Unit card background
-    g.append('rect').attr('width',W).attr('height',H).attr('rx',2)
-      .attr('fill',vis.color).attr('stroke',isAtk?'#C0392B':isMoving?'#2980B9':vis.border)
-      .attr('stroke-width',isSel?2:1.2).attr('opacity',.92);
-    // Country flag strip (top 5px)
-    g.append('rect').attr('width',W).attr('height',5).attr('rx',2)
-      .attr('fill',isAtk?'#C0392B':isMoving?'#2980B9':vis.border).attr('opacity',.7);
-    // Symbol text (bold, center)
-    g.append('text').attr('x',W/2).attr('y',13)
-      .attr('text-anchor','middle').attr('dominant-baseline','middle')
-      .attr('font-family','Share Tech Mono').attr('font-size','8px')
-      .attr('font-weight','bold').attr('fill','white').attr('letter-spacing','.04em')
-      .text(vis.symbol).style('pointer-events','none');
-    // Size label (bottom)
-    g.append('text').attr('x',W/2).attr('y',H-3)
-      .attr('text-anchor','middle').attr('dominant-baseline','auto')
-      .attr('font-family','Share Tech Mono').attr('font-size','5px')
-      .attr('fill','rgba(255,255,255,.7)')
-      .text(u.size>999?Math.round(u.size/1000)+'k':u.size).style('pointer-events','none');
-    // Moving indicator
-    if(isMoving){
-      g.append('text').attr('x',W+3).attr('y',H/2+2)
-        .attr('font-size','8px').attr('fill','#3a8fd4').text('►').style('pointer-events','none');
+    // Card shadow
+    ctx.shadowColor='rgba(0,0,0,.6)';
+    ctx.shadowBlur=6;
+    // Card background
+    roundRect(ctx,x,y,UW,UH,3);
+    ctx.fillStyle=vis.color;
+    ctx.fill();
+    ctx.strokeStyle=isA?'#C0392B':isM?'#2980B9':(isSel?'#C9A84C':vis.border);
+    ctx.lineWidth=isSel?2:1.2;
+    ctx.stroke();
+    ctx.shadowBlur=0;
+    // Top color strip
+    roundRect(ctx,x,y,UW,5,3);
+    ctx.fillStyle=isA?'#C0392B':isM?'#2980B9':vis.border;
+    ctx.globalAlpha=0.8;
+    ctx.fill();
+    ctx.globalAlpha=1;
+    // Symbol
+    ctx.fillStyle='white';
+    ctx.font='bold 8px "Share Tech Mono"';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(vis.symbol,cx,cy-2);
+    // Size
+    ctx.fillStyle='rgba(255,255,255,.7)';
+    ctx.font='5px "Share Tech Mono"';
+    ctx.fillText(u.size>999?Math.round(u.size/1000)+'k':u.size,cx,cy+UH/2-3);
+    // Moving arrow
+    if(isM){
+      ctx.fillStyle='#3a8fd4';
+      ctx.font='9px sans-serif';
+      ctx.textAlign='left';
+      ctx.fillText('►',cx+UW/2+2,cy+3);
     }
-    if(isAtk){
-      g.append('text').attr('x',W+3).attr('y',H/2+2)
-        .attr('font-size','8px').attr('fill','#C0392B').text('⚔').style('pointer-events','none');
+    if(isA){
+      ctx.fillStyle='#C0392B';
+      ctx.font='9px sans-serif';
+      ctx.textAlign='left';
+      ctx.fillText('⚔',cx+UW/2+2,cy+3);
     }
+    ctx.textAlign='start';
+    ctx.textBaseline='alphabetic';
   });
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
 
 // ── UNIT MOVEMENT ─────────────────────────────────────────────────────────────
@@ -658,17 +795,18 @@ function selectUnit(id){
 function enableMoveMode(){
   moveMode=true;
   document.getElementById('movebanner').classList.add('show');
-  // Highlight province dots
-  ROOT&&ROOT.selectAll('.player circle').attr('fill','rgba(201,168,76,.35)').attr('stroke','#C9A84C');
+  document.getElementById('mapsvg').style.cursor='crosshair';
+  renderCanvas();
 }
 function disableMoveMode(){
   moveMode=false;selUnit=null;
   document.getElementById('movebanner').classList.remove('show');
-  drawProvinces();drawUnits();
+  document.getElementById('mapsvg').style.cursor='';
+  renderCanvas();
 }
 
 function pickMoveTarget(event){
-  // Invert the zoom transform to get map coordinates
+  if(!moveMode||!selUnit)return;
   const pt=curT.invert([event.offsetX,event.offsetY]);
   const inv=proj.invert(pt);
   if(!inv){disableMoveMode();return;}
@@ -696,11 +834,14 @@ async function doMove(unit,targetProvId){
   const idx=UNITS.findIndex(u=>u.id===unit.id);
   if(idx>=0)UNITS[idx]={...UNITS[idx],status:'moving',target_province:targetProvId,move_ends_at:endsAt};
   toast(`Moving to ${tp.name} — ETA ${etaMin}min`,'ok');
-  closePanel();drawRoads();drawUnits();
+  closePanel();
+  drawRoads(); // SVG roads
+  renderCanvas(); // canvas units
 }
 
 function animateUnits(){
-  if(!proj)return;
+  if(!proj||!ROOT)return;
+  renderCanvas();
   let changed=false;
   UNITS.forEach(u=>{
     if(u.status!=='moving'||!u.target_province||!u.move_started_at||!u.move_ends_at)return;
@@ -716,6 +857,7 @@ function animateUnits(){
         UNITS[idx]={...UNITS[idx],status:'idle',province_id:u.target_province,lat:tp.lat,lng:tp.lng,target_province:null,move_started_at:null,move_ends_at:null};
         SB.from('units').update({status:'idle',province_id:u.target_province,target_province:null,move_started_at:null,move_ends_at:null,lat:tp.lat,lng:tp.lng,updated_at:new Date().toISOString()}).eq('id',u.id);
         toast(`${UICONS[u.type]||'⚔️'} arrived at ${tp.name}`,'ok');
+        drawRoads();
         changed=true;
       }
     } else {
@@ -956,8 +1098,13 @@ function actionsHTML(){
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 function startMove(unitId){
   selUnit=UNITS.find(u=>u.id===unitId);
-  enableMoveMode();
+  if(!selUnit){toast('Unit not found','err');return;}
   closePanel();
+  // Small delay so panel closes before move mode activates
+  setTimeout(()=>{
+    enableMoveMode();
+    toast('Click any point on the map to move your unit there','');
+  },200);
 }
 
 function openAttack(unitId){
