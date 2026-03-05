@@ -798,10 +798,6 @@ function setupMapClick(){
   });
 }
 
-
-
-}
-
 // ── PANEL SYSTEM ──────────────────────────────────────────────────────────────
 function openPanel(type,data){
   const el=document.getElementById('panel');
@@ -1026,16 +1022,6 @@ function actionsHTML(){
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
-function startMove(unitId){
-  selUnit=UNITS.find(u=>u.id===unitId);
-  if(!selUnit){toast('Unit not found','err');return;}
-  closePanel();
-  // Small delay so panel closes before move mode activates
-  setTimeout(()=>{
-    enableMoveMode();
-    toast('Click any point on the map to move your unit there','');
-  },200);
-}
 
 function openAttack(unitId){
   const u=UNITS.find(x=>x.id===unitId);
@@ -1235,12 +1221,7 @@ async function loadTicker(){
   if(data?.length)document.getElementById('tickertext').textContent=data.map(n=>n.headline).join('   ·   ');
 }
 
-function zoomTo(lat,lng){
-  if(!svg||!zoomB||!proj)return;
-  const [x,y]=proj([lng,lat]);
-  const W=window.innerWidth,H=window.innerHeight,sc=7;
-  svg.transition().duration(750).call(zoomB.transform,d3.zoomIdentity.translate(W/2-sc*x,H/2-sc*y).scale(sc));
-}
+
 
 function setMode(mode,el){
   mapMode=mode;
@@ -1249,8 +1230,6 @@ function setMode(mode,el){
   if(ROOT)ROOT.selectAll('.clayer path').attr('fill',d=>{const i=iso3(d.id);const c=i?COUNTRIES.find(x=>x.id===i):null;return c?ccolor(c):'#0d1b2e';});
 }
 
-// mzoom defined in new map engine
-// mreset defined in new map engine
 
 function calcDom(c){
   const tg=COUNTRIES.reduce((s,x)=>s+x.gdp,0)||1;
